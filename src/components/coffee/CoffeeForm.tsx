@@ -192,6 +192,34 @@ export function CoffeeForm({
         </Field>
       </fieldset>
 
+      <fieldset className="flex flex-col gap-4">
+        <legend className="mb-1 font-display text-lg font-semibold">Storage (optional)</legend>
+        <p className="-mt-2 text-xs text-foreground-muted">Tracked for reference only — doesn&rsquo;t change the estimate.</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Storage method" htmlFor="f-storage-method">
+            <input
+              id="f-storage-method"
+              list="storage-method-options"
+              className={baseInputClasses}
+              value={values.storageMethod}
+              onChange={(e) => set("storageMethod", e.target.value)}
+              placeholder="Sealed bag, room temperature"
+            />
+            <datalist id="storage-method-options">
+              <option value="Sealed bag, room temperature" />
+              <option value="Opened bag, room temperature" />
+              <option value="Vacuum sealed" />
+              <option value="Frozen (whole bag)" />
+              <option value="Frozen (individual doses)" />
+              <option value="Fellow Atmos / valve canister" />
+            </datalist>
+          </Field>
+          <Field label="Bag opened date" htmlFor="f-bag-opened">
+            <input id="f-bag-opened" type="date" className={baseInputClasses} value={values.bagOpenedDate} onChange={(e) => set("bagOpenedDate", e.target.value)} />
+          </Field>
+        </div>
+      </fieldset>
+
       {error && (
         <p role="alert" className="text-sm font-medium text-status-not-ready-text">
           {error}

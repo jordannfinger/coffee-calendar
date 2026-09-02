@@ -2,22 +2,43 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { AuthGate } from "@/components/auth/AuthGate";
 import { createClient } from "@/lib/supabase/client";
-import type { CoffeeRow } from "@/lib/coffee/coffeeTypes";
 import { calculateCoffeeWindow, getCoffeeStatus } from "@/lib/coffee/engine";
 import { parseDateOnly, today } from "@/lib/coffee/dateUtils";
-import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
-import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { PROCESS_OFFSETS, ROAST_LEVEL_BASELINE } from "@/lib/coffee/model";
 import { Timeline } from "@/components/coffee/Timeline";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
-import { BrewLogSection } from "@/components/coffee/BrewLogSection";
-import { ShareSection } from "@/components/coffee/ShareSection";
 import { Card } from "@/components/ui/Card";
-import { Button, buttonClasses } from "@/components/ui/Button";
+import { buttonClasses } from "@/components/ui/Button";
+import type { Process, RoastLevel } from "@/lib/coffee/types";
+
+// A deliberately narrow, curated set of columns — personal fields (notes,
+// rating, remaining quantity, order date) are never selected here, even
+// though RLS permits reading the full row once share_token is set.
+const PUBLIC_COLUMNS =
+  "name, roaster, origin, region, producer, variety, elevation_m, process, process_subtype, roast_level, roast_date, tasting_notes, brew_method, grind_setting, recipe, dose_g, water_g, storage_method";
+
+interface SharedCoffee {
+  name: string;
+  roaster: string;
+  origin: string;
+  region: string | null;
+  producer: string | null;
+  variety: string | null;
+  elevation_m: number | null;
+  process: Process;
+  process_subtype: string | null;
+  roast_level: RoastLevel;
+  roast_date: string;
+  tasting_notes: string | null;
+  brew_method: string | null;
+  grind_setting: string | null;
+  recipe: string | null;
+  dose_g: number | null;
+  water_g: number | null;
+  storage_method: string | null;
+}
 
 function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
   if (value === null || value === undefined || value === "") return null;
@@ -29,84 +50,59 @@ function DetailRow({ label, value }: { label: string; value?: string | number | 
   );
 }
 
-function CoffeeDetailContent({ id }: { id: string }) {
-  const router = useRouter();
-  const [coffee, setCoffee] = useState<CoffeeRow | null>(null);
+export default function SharedCoffeePage({ params }: { params: Promise<{ shareToken: string }> }) {
+  const { shareToken } = use(params);
+  const [coffee, setCoffee] = useState<SharedCoffee | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const overrides = useProfileOverrides();
 
   useEffect(() => {
     let cancelled = false;
     const supabase = createClient();
     supabase
       .from("coffees")
-      .select("*")
-      .eq("id", id)
+      .select(PUBLIC_COLUMNS)
+      .eq("share_token", shareToken)
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
         if (!data) setNotFound(true);
-        else setCoffee(data);
+        else setCoffee(data as unknown as SharedCoffee);
         setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [id]);
-
-  async function handleDelete() {
-    if (!coffee) return;
-    if (!window.confirm(`Delete "${coffee.name}"? This can't be undone.`)) return;
-    setDeleting(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("coffees").delete().eq("id", coffee.id);
-    setDeleting(false);
-    if (!error) router.push("/coffee");
-  }
+  }, [shareToken]);
 
   if (loading) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6" aria-busy="true" />;
+
   if (notFound || !coffee) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6">
-        <p className="text-foreground-muted">Coffee not found.</p>
-        <Link href="/coffee" className="mt-4 inline-block underline decoration-border underline-offset-2">
-          Back to My Coffee
+        <p className="text-foreground-muted">This share link is no longer active.</p>
+        <Link href="/" className="mt-4 inline-block underline decoration-border underline-offset-2">
+          Go to Coffee Calendar
         </Link>
       </div>
     );
   }
 
-  const roastDate = parseDateOnly(coffee.roast_date);
-  const overrideProfile = resolveOverride(overrides, coffee.process, coffee.process_subtype, coffee.roast_level);
   const coffeeWindow = calculateCoffeeWindow({
-    roastDate,
+    roastDate: parseDateOnly(coffee.roast_date),
     process: coffee.process,
     processSubtype: coffee.process_subtype,
     roastLevel: coffee.roast_level,
-    overrideProfile,
   });
   const status = getCoffeeStatus(coffeeWindow, today());
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-semibold">{coffee.name}</h1>
-          <p className="text-foreground-muted">{coffee.roaster}</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/coffee/${coffee.id}/edit`} className={buttonClasses("secondary", "sm")}>
-            Edit
-          </Link>
-          <Button variant="secondary" size="sm" onClick={handleDelete} disabled={deleting} className="text-status-not-ready-text">
-            {deleting ? "Deleting…" : "Delete"}
-          </Button>
-        </div>
-      </div>
+      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-foreground-muted">Shared coffee</p>
+      <h1 className="font-display text-3xl font-semibold">{coffee.name}</h1>
+      <p className="text-foreground-muted">{coffee.roaster}</p>
 
-      <Card className="mb-6 flex flex-col gap-5">
+      <Card className="my-6 flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-lg font-semibold">Drinking window</h2>
           <div className="flex items-center gap-2">
@@ -128,14 +124,7 @@ function CoffeeDetailContent({ id }: { id: string }) {
           <DetailRow label="Producer" value={coffee.producer} />
           <DetailRow label="Region" value={coffee.region} />
           <DetailRow label="Elevation" value={coffee.elevation_m ? `${coffee.elevation_m} m` : null} />
-          <DetailRow label="Lot" value={coffee.lot} />
-          <DetailRow label="Harvest year" value={coffee.harvest_year} />
-          <DetailRow label="Order date" value={coffee.order_date} />
-          <DetailRow label="Bag size" value={coffee.bag_size_g ? `${coffee.bag_size_g} g` : null} />
-          <DetailRow label="Remaining" value={coffee.remaining_percent !== null ? `${coffee.remaining_percent}%` : null} />
-          <DetailRow label="Rating" value={coffee.rating ? `${coffee.rating} / 5` : null} />
           <DetailRow label="Storage" value={coffee.storage_method} />
-          <DetailRow label="Bag opened" value={coffee.bag_opened_date} />
         </dl>
         {coffee.tasting_notes && (
           <div className="mt-4 border-t border-border pt-4">
@@ -161,27 +150,12 @@ function CoffeeDetailContent({ id }: { id: string }) {
         </Card>
       )}
 
-      {coffee.notes && (
-        <Card className="mb-6">
-          <h2 className="mb-2 font-display text-lg font-semibold">Personal notes</h2>
-          <p className="text-sm text-foreground">{coffee.notes}</p>
-        </Card>
-      )}
-
-      <div className="mb-6">
-        <BrewLogSection coffeeId={coffee.id} />
-      </div>
-
-      <ShareSection coffee={coffee} onChange={(updated) => setCoffee(updated)} />
+      <Card className="bg-brand-tint/50 text-center text-sm text-foreground-muted">
+        Track your own coffee at{" "}
+        <Link href="/" className={buttonClasses("secondary", "sm", "ml-2")}>
+          Coffee Calendar →
+        </Link>
+      </Card>
     </div>
-  );
-}
-
-export default function CoffeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  return (
-    <AuthGate title="Coffee detail">
-      <CoffeeDetailContent id={id} />
-    </AuthGate>
   );
 }

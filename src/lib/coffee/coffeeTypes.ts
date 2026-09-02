@@ -30,6 +30,8 @@ export interface CoffeeFormValues {
   rating: string;
   bagSizeG: string;
   remainingPercent: string;
+  storageMethod: string;
+  bagOpenedDate: string;
 }
 
 export const EMPTY_COFFEE_FORM: CoffeeFormValues = {
@@ -57,6 +59,8 @@ export const EMPTY_COFFEE_FORM: CoffeeFormValues = {
   rating: "",
   bagSizeG: "",
   remainingPercent: "",
+  storageMethod: "",
+  bagOpenedDate: "",
 };
 
 function toStr(value: string | number | null | undefined): string {
@@ -89,6 +93,8 @@ export function rowToFormValues(row: CoffeeRow): CoffeeFormValues {
     rating: toStr(row.rating),
     bagSizeG: toStr(row.bag_size_g),
     remainingPercent: toStr(row.remaining_percent),
+    storageMethod: row.storage_method ?? "",
+    bagOpenedDate: row.bag_opened_date ?? "",
   };
 }
 
@@ -138,5 +144,7 @@ export function formValuesToInsert(values: CoffeeFormValues, userId: string): Co
     rating: toIntOrNull(values.rating),
     bag_size_g: toNumberOrNull(values.bagSizeG),
     remaining_percent: toIntOrNull(values.remainingPercent),
+    storage_method: toTextOrNull(values.storageMethod),
+    bag_opened_date: toTextOrNull(values.bagOpenedDate),
   };
 }

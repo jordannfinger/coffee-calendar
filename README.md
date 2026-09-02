@@ -56,8 +56,9 @@ docs/
 | `/about` | Methodology, confidence levels, uncertainty |
 | `/today` | "What should I drink today?" ranked list |
 | `/calendar` | Month grid of every saved coffee's status per day |
-| `/coffee` | My Coffee — saved coffee list |
-| `/coffee/new`, `/coffee/[id]`, `/coffee/[id]/edit` | Add/view/edit a coffee |
+| `/coffee` | My Coffee — saved coffee list, with sort/filter and CSV/JSON export |
+| `/coffee/new`, `/coffee/[id]`, `/coffee/[id]/edit` | Add/view/edit a coffee, including its brew log and share link |
+| `/c/[shareToken]` | Public, read-only view of one shared coffee — no login, no personal fields |
 | `/login`, `/signup`, `/reset-password`, `/update-password` | Optional: claim an anonymous session into a real account, or log into an existing one |
 
 Every route works immediately for every visitor — nothing is gated behind login. `/login` and `/signup` exist purely so someone can *optionally* attach an email/password to their existing (anonymous) data.
@@ -71,6 +72,12 @@ Two tables (see [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_i
 **`coffees`** — a user's saved coffee inventory. `user_id references auth.users`, RLS restricts every operation to `auth.uid() = user_id`. Required: name, roaster, origin, roast_date, process, roast_level. Everything else (variety, producer, region, elevation, lot, harvest year, tasting notes, brew method, grind setting, recipe, dose, water, personal notes, rating, bag size, remaining %, order date) is optional. `order_date` is intentionally nullable even though the brief lists it as required — it has zero effect on any calculation, and requiring it added form friction with no UX benefit.
 
 **`process_profiles`** — the configurable development model as data, not code. Columns: `process`, `subtype` (nullable — null matches any subtype), `roast_level`, `min_rest_days`, `peak_start_days`, `peak_end_days`, `drinkable_end_days`, `too_old_days`, `confidence`, `notes`. Publicly readable (so the calculator works logged out); writable only by the service role. A row here **overrides** the formula in `model.ts` for its combination — the model can evolve from real feedback without a code deploy. It starts empty; the app works fully on formula defaults with no rows present.
+
+**`brew_logs`** (see [`0003_brew_logs.sql`](supabase/migrations/0003_brew_logs.sql)) — multiple logged brew attempts per coffee, distinct from the single "current recipe" fields on `coffees`: `coffee_id`, `brewed_at`, `brew_method`, `grind_setting`, `dose_g`, `water_g`, `drawdown`, `rating`, `tasting_notes`, `notes`, `locked`. Same owner-only RLS pattern as `coffees`.
+
+**`coffees.storage_method` / `coffees.bag_opened_date`** (see [`0004_storage_and_sharing.sql`](supabase/migrations/0004_storage_and_sharing.sql)) — informational storage tracking; deliberately does **not** feed the calculation engine (see Assumptions below).
+
+**`coffees.share_token`** — when set (via the "Create share link" button on a coffee's detail page), an *additional* RLS select policy makes that one row publicly readable regardless of who's asking, at `/c/[shareToken]`. The public page only ever queries a curated, hardcoded column list (name, origin, process, roast info, tasting/brewing detail) — personal fields like `notes`, `rating`, and `remaining_percent` are never requested by that page's code, even though RLS would technically permit it.
 
 ---
 
@@ -109,7 +116,7 @@ Every status is shown with an icon **and** text, not color alone (see [`statusIc
 
 All date math lives in [`dateUtils.ts`](src/lib/coffee/dateUtils.ts) and operates on **calendar dates**, deliberately avoiding `toISOString()`/UTC conversion, which can shift a date by one day depending on the user's timezone offset. Dates are parsed and formatted using local calendar components only (`getFullYear()`/`getMonth()`/`getDate()`), so "12 September" means the same day everywhere regardless of the viewer's timezone.
 
-36 unit tests in [`dateUtils.test.ts`](src/lib/coffee/dateUtils.test.ts) and [`engine.test.ts`](src/lib/coffee/engine.test.ts) cover: leap years (including Feb 29 both as a roast date and as a date being added-across), month and year boundaries, status transitions at every milestone boundary (inclusive/exclusive edges), date search ranking, and reverse-calculation across a year boundary. Run them with:
+40 unit tests in [`dateUtils.test.ts`](src/lib/coffee/dateUtils.test.ts), [`engine.test.ts`](src/lib/coffee/engine.test.ts), and [`alerts.test.ts`](src/lib/coffee/alerts.test.ts) cover: leap years (including Feb 29 both as a roast date and as a date being added-across), month and year boundaries, status transitions at every milestone boundary (inclusive/exclusive edges), date search ranking, and reverse-calculation across a year boundary. Run them with:
 
 ```bash
 npm test
@@ -188,13 +195,25 @@ No other infrastructure is required — Supabase is the only external dependency
 
 ---
 
-## 8. Assumptions and limitations
+## 8. Feature additions beyond the MVP
+
+- **Peak alerts** ([`alerts.ts`](src/lib/coffee/alerts.ts)) — a banner on `/today` flags any coffee entering or leaving its peak window tomorrow. This is the in-app equivalent of "your coffee enters peak tomorrow"; there's no email/push infrastructure wired up (no SMTP/email-provider credentials configured), so it surfaces the same signal directly in the UI instead of as a notification. Wiring up real email/push would mean adding a mail provider (e.g. Resend) plus a scheduled job (Vercel Cron or Supabase's `pg_cron`) to run the same query daily.
+- **Brew log** (`brew_logs` table, [`BrewLogSection.tsx`](src/components/coffee/BrewLogSection.tsx)) — log individual brew attempts (grind, dose, water, drawdown, rating, notes, a "locked" flag for a repeatable result) per coffee, separate from the coffee's own single "current recipe" fields.
+- **Data export** ([`exportCoffees.ts`](src/lib/coffee/exportCoffees.ts)) — CSV/JSON export of My Coffee, generated client-side. Particularly relevant now that data lives in anonymous sessions by default — export is a safety net independent of "Save my data."
+- **Storage tracking** — `storage_method` (free text, with common suggestions) and `bag_opened_date` on each coffee. Informational only; see Assumptions below for why it doesn't affect the calculation.
+- **Shareable public coffee page** (`/c/[shareToken]`, [`ShareSection.tsx`](src/components/coffee/ShareSection.tsx)) — generate a public link to one coffee's status and peak window. No login needed to view; personal fields are never exposed (see the `share_token` schema note above).
+- **Sort/filter on My Coffee** — by status, process, roaster, and roast date, purely client-side over the already-fetched list.
+
+---
+
+## 9. Assumptions and limitations
 
 - **Anonymous sessions aren't portable across browsers/devices** unless claimed via "Save my data." Clearing cookies or site data on a device that never claimed its session loses that data permanently — there's no recovery path, since nothing ties an unclaimed anonymous user back to a person.
 - **`order_date` is optional**, despite being listed as required in the original brief — it doesn't feed the calculation engine, and making it mandatory would add form friction without a UX benefit.
 - **Dark roast is intentionally unsupported** (roast levels stop at Medium-Dark), per the brief — the model's evidence base for dark roast + filter brewing specifically is thin.
 - **Process subtype does not currently perturb the calculation** — it's tracked for reference (and shown in the UI) but the model only varies by process family + roast level. A `process_profiles` override row can be scoped to a specific subtype if real-world data justifies a different number.
-- **Storage/packaging is not modeled** (bag opened date, vacuum/freezing, etc.) — the schema and this README call this out as a natural extension, but it was deliberately left out of the MVP per the brief's scope guidance. The `too_old_days` numbers assume reasonably good storage (sealed bag, room temperature, out of light).
+- **Storage/packaging is tracked but does not affect the calculation.** `storage_method` and `bag_opened_date` are informational fields shown on a coffee's detail page — there's no researched basis yet for exactly how much, say, freezing or an opened bag should shift a window, so the engine deliberately doesn't guess. The `too_old_days` numbers assume reasonably good storage (sealed bag, room temperature, out of light) throughout.
+- **A shared coffee's link has no expiry or revocation history** — "Stop sharing" clears `share_token`, but anyone who already has the old link and re-shares it before it's cleared could theoretically race a viewer; low-stakes for this app's data, but worth knowing.
 - **Grind size and brew method are not factored into timing** — they're tracked on a saved coffee for reference, but degassing/staling after grinding is a different, much faster timescale than whole-bean storage, which is out of scope here.
 - **The model is a synthesis of public guidance, not a peer-reviewed standard.** Sources disagree meaningfully (not just by a day or two); confidence ratings communicate where the evidence is strong versus thin. See the research doc's explicit caveats section.
 - **Supabase's default email provider is rate-limited.** For production use beyond light testing, configure custom SMTP in the Supabase dashboard.

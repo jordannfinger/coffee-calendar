@@ -6,6 +6,7 @@ import { useCoffees } from "@/lib/coffee/useCoffees";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
 import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { rankForDate } from "@/lib/coffee/engine";
+import { getPeakAlerts } from "@/lib/coffee/alerts";
 import { statusLine } from "@/components/coffee/CoffeeCard";
 import { today, parseDateOnly, formatWithWeekday } from "@/lib/coffee/dateUtils";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
@@ -38,11 +39,29 @@ function TodayContent() {
   );
 
   const peakRanked = ranked.filter((r) => r.status === "peak");
+  const alerts = getPeakAlerts(
+    ranked.map((r) => ({ item: r.item, window: r.window })),
+    targetDate,
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <h1 className="font-display text-3xl font-semibold">What should I drink today?</h1>
       <p className="mt-1 text-foreground-muted">{formatWithWeekday(targetDate)}</p>
+
+      {alerts.length > 0 && (
+        <Card className="mt-6 flex flex-col gap-2 border-status-peak-border bg-status-peak-bg">
+          {alerts.map((alert) => (
+            <p key={`${alert.item.id}-${alert.type}`} className="text-sm text-status-peak-text">
+              <span aria-hidden="true">{alert.type === "entering_peak_tomorrow" ? "⭐" : "🟠"}</span>{" "}
+              <Link href={`/coffee/${alert.item.id}`} className="font-semibold underline decoration-current/40 underline-offset-2">
+                {alert.item.name}
+              </Link>{" "}
+              {alert.type === "entering_peak_tomorrow" ? "enters peak tomorrow" : "leaves peak tomorrow"}.
+            </p>
+          ))}
+        </Card>
+      )}
 
       {loading && <p className="mt-8 text-sm text-foreground-muted">Loading your coffees…</p>}
 

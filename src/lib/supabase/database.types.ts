@@ -11,8 +11,71 @@ export type Database = {
   };
   public: {
     Tables: {
+      brew_logs: {
+        Row: {
+          brew_method: string | null;
+          brewed_at: string;
+          coffee_id: string;
+          created_at: string;
+          dose_g: number | null;
+          drawdown: string | null;
+          grind_setting: string | null;
+          id: string;
+          locked: boolean;
+          notes: string | null;
+          rating: number | null;
+          tasting_notes: string | null;
+          updated_at: string;
+          user_id: string;
+          water_g: number | null;
+        };
+        Insert: {
+          brew_method?: string | null;
+          brewed_at?: string;
+          coffee_id: string;
+          created_at?: string;
+          dose_g?: number | null;
+          drawdown?: string | null;
+          grind_setting?: string | null;
+          id?: string;
+          locked?: boolean;
+          notes?: string | null;
+          rating?: number | null;
+          tasting_notes?: string | null;
+          updated_at?: string;
+          user_id: string;
+          water_g?: number | null;
+        };
+        Update: {
+          brew_method?: string | null;
+          brewed_at?: string;
+          coffee_id?: string;
+          created_at?: string;
+          dose_g?: number | null;
+          drawdown?: string | null;
+          grind_setting?: string | null;
+          id?: string;
+          locked?: boolean;
+          notes?: string | null;
+          rating?: number | null;
+          tasting_notes?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          water_g?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brew_logs_coffee_id_fkey";
+            columns: ["coffee_id"];
+            isOneToOne: false;
+            referencedRelation: "coffees";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       coffees: {
         Row: {
+          bag_opened_date: string | null;
           bag_size_g: number | null;
           brew_method: string | null;
           created_at: string;
@@ -36,6 +99,8 @@ export type Database = {
           roast_date: string;
           roast_level: Database["public"]["Enums"]["roast_level"];
           roaster: string;
+          share_token: string | null;
+          storage_method: string | null;
           tasting_notes: string | null;
           updated_at: string;
           user_id: string;
@@ -43,6 +108,7 @@ export type Database = {
           water_g: number | null;
         };
         Insert: {
+          bag_opened_date?: string | null;
           bag_size_g?: number | null;
           brew_method?: string | null;
           created_at?: string;
@@ -66,6 +132,8 @@ export type Database = {
           roast_date: string;
           roast_level: Database["public"]["Enums"]["roast_level"];
           roaster: string;
+          share_token?: string | null;
+          storage_method?: string | null;
           tasting_notes?: string | null;
           updated_at?: string;
           user_id: string;
@@ -73,6 +141,7 @@ export type Database = {
           water_g?: number | null;
         };
         Update: {
+          bag_opened_date?: string | null;
           bag_size_g?: number | null;
           brew_method?: string | null;
           created_at?: string;
@@ -96,6 +165,8 @@ export type Database = {
           roast_date?: string;
           roast_level?: Database["public"]["Enums"]["roast_level"];
           roaster?: string;
+          share_token?: string | null;
+          storage_method?: string | null;
           tasting_notes?: string | null;
           updated_at?: string;
           user_id?: string;
