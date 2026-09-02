@@ -15,7 +15,8 @@ Coffee Calendar answers three questions well:
 ## 1. Architecture
 
 - **Next.js 16 (App Router) + TypeScript + Tailwind CSS v4**, deployed to Vercel.
-- **Supabase** for Postgres + Auth (email/password and magic link), with Row Level Security protecting per-user data.
+- **Supabase** for Postgres + Auth (anonymous sign-in by default, with optional email/password or magic link), with Row Level Security protecting per-user data.
+- **No login required to use the app.** Every visitor gets a real (anonymous) Supabase session automatically on first load — `useAuth` in [`useAuth.ts`](src/lib/supabase/useAuth.ts) calls `signInAnonymously()` if there's no session yet. RLS treats an anonymous session exactly like a normal one, so saved coffees, the calendar, and Drink Today all work immediately with zero UI friction. A visitor can optionally add an email/password later (`/signup`, labeled "Save my data") to make their data survive clearing cookies or follow them to a new device — this **links** the existing anonymous user to real credentials via `supabase.auth.updateUser()` rather than creating a separate account, so nothing already saved is lost.
 - One calculation engine, one source of truth. Every feature — the calculator, calendar, date search, reverse calculator, My Coffee, and Drink Today — computes coffee windows through a single function:
 
   ```ts
@@ -48,18 +49,18 @@ docs/
 
 ### Routes
 
-| Route | Purpose | Auth |
-|---|---|---|
-| `/` | Landing page + interactive calculator | Public |
-| `/search` | Date search + reverse "ordering guidance" calculator | Public (saved-coffee ranking needs login) |
-| `/about` | Methodology, confidence levels, uncertainty | Public |
-| `/login`, `/signup`, `/reset-password`, `/update-password` | Auth flows | Public |
-| `/today` | "What should I drink today?" ranked list | Requires login |
-| `/calendar` | Month grid of every saved coffee's status per day | Requires login |
-| `/coffee` | My Coffee — saved coffee list | Requires login |
-| `/coffee/new`, `/coffee/[id]`, `/coffee/[id]/edit` | Add/view/edit a coffee | Requires login |
+| Route | Purpose |
+|---|---|
+| `/` | Landing page + interactive calculator |
+| `/search` | Date search + reverse "ordering guidance" calculator, ranks your saved coffees |
+| `/about` | Methodology, confidence levels, uncertainty |
+| `/today` | "What should I drink today?" ranked list |
+| `/calendar` | Month grid of every saved coffee's status per day |
+| `/coffee` | My Coffee — saved coffee list |
+| `/coffee/new`, `/coffee/[id]`, `/coffee/[id]/edit` | Add/view/edit a coffee |
+| `/login`, `/signup`, `/reset-password`, `/update-password` | Optional: claim an anonymous session into a real account, or log into an existing one |
 
-Logged-out users get the full calculator and date search; logging in unlocks saved coffees, the personal calendar, and Drink Today.
+Every route works immediately for every visitor — nothing is gated behind login. `/login` and `/signup` exist purely so someone can *optionally* attach an email/password to their existing (anonymous) data.
 
 ---
 
@@ -154,13 +155,15 @@ npx supabase db push
 
 or by running the SQL in `supabase/migrations/0001_init.sql` and `0002_fix_function_search_path.sql` directly in the Supabase SQL editor, in order.
 
+**Enable anonymous sign-ins** — Authentication → Sign In / Providers in the Supabase dashboard → turn on "Allow anonymous sign-ins" → Save. Without this, visitors get a session-setup error instead of being signed in automatically (the app has no login-required fallback).
+
 Then:
 
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000. Sign up for an account (Supabase's default email provider is rate-limited — for heavier local testing, configure custom SMTP in your Supabase project's Auth settings), then use Add Coffee to start populating My Coffee, the Calendar, and Drink Today.
+Open http://localhost:3000 — the app is immediately usable, no login. If you want to test the "Save my data" flow (linking to a real email/password account), note Supabase's default email provider is rate-limited; configure custom SMTP in your Supabase project's Auth settings for heavier testing.
 
 ### Other scripts
 
@@ -187,6 +190,7 @@ No other infrastructure is required — Supabase is the only external dependency
 
 ## 8. Assumptions and limitations
 
+- **Anonymous sessions aren't portable across browsers/devices** unless claimed via "Save my data." Clearing cookies or site data on a device that never claimed its session loses that data permanently — there's no recovery path, since nothing ties an unclaimed anonymous user back to a person.
 - **`order_date` is optional**, despite being listed as required in the original brief — it doesn't feed the calculation engine, and making it mandatory would add form friction without a UX benefit.
 - **Dark roast is intentionally unsupported** (roast levels stop at Medium-Dark), per the brief — the model's evidence base for dark roast + filter brewing specifically is thin.
 - **Process subtype does not currently perturb the calculation** — it's tracked for reference (and shown in the UI) but the model only varies by process family + roast level. A `process_profiles` override row can be scoped to a specific subtype if real-world data justifies a different number.

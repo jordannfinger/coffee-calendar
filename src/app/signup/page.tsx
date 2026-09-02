@@ -30,11 +30,23 @@ export default function SignupPage() {
 
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+
+    // If we already have an anonymous session, LINK it to a real account
+    // instead of creating a separate one — this keeps the same user id, so
+    // every coffee already saved carries straight over.
+    const { error } = currentUser?.is_anonymous
+      ? await supabase.auth.updateUser(
+          { email, password },
+          { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        )
+      : await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        });
     setLoading(false);
 
     if (error) {
@@ -48,15 +60,15 @@ export default function SignupPage() {
     return (
       <AuthCard title="Check your email">
         <p className="text-sm text-foreground-muted">
-          We sent a confirmation link to <strong className="text-foreground">{email}</strong>. Click it to activate your account,
-          then come back and log in.
+          We sent a confirmation link to <strong className="text-foreground">{email}</strong>. Click it to finish saving your data
+          to this account — everything you&rsquo;ve already added will still be there.
         </p>
       </AuthCard>
     );
   }
 
   return (
-    <AuthCard title="Create your account" subtitle="Save coffees, see your calendar, and get a ranked drink-today list.">
+    <AuthCard title="Save your data" subtitle="Add an email and password so your coffees survive clearing cookies or a new device — everything you've added stays exactly as it is.">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <Field label="Email" htmlFor="signup-email">
           <input
@@ -98,10 +110,10 @@ export default function SignupPage() {
           </p>
         )}
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Creating account…" : "Create account"}
+          {loading ? "Saving…" : "Save my data"}
         </Button>
         <p className="text-center text-sm text-foreground-muted">
-          Already have an account?{" "}
+          Already have an account on another device?{" "}
           <Link href="/login" className="underline decoration-border underline-offset-2 hover:text-foreground">
             Log in
           </Link>

@@ -8,21 +8,19 @@ import { useAuth } from "@/lib/supabase/useAuth";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_LINKS = [
-  { href: "/today", label: "Today", requiresAuth: true },
-  { href: "/calendar", label: "Calendar", requiresAuth: true },
-  { href: "/search", label: "Date Search", requiresAuth: false },
-  { href: "/coffee", label: "My Coffee", requiresAuth: true },
-  { href: "/coffee/new", label: "Add Coffee", requiresAuth: true },
-  { href: "/about", label: "About", requiresAuth: false },
+  { href: "/today", label: "Today" },
+  { href: "/calendar", label: "Calendar" },
+  { href: "/search", label: "Date Search" },
+  { href: "/coffee", label: "My Coffee" },
+  { href: "/coffee/new", label: "Add Coffee" },
+  { href: "/about", label: "About" },
 ];
 
 export function Nav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, isAnonymous } = useAuth();
   const [open, setOpen] = useState(false);
-
-  const links = NAV_LINKS.filter((link) => !link.requiresAuth || user);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -41,7 +39,7 @@ export function Nav() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
-          {links.map((link) => {
+          {NAV_LINKS.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
@@ -60,22 +58,22 @@ export function Nav() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          {loading ? null : user ? (
+          {loading || !user ? null : isAnonymous ? (
+            <>
+              <Link href="/login" className="rounded-full px-4 py-2 text-sm font-medium text-foreground-muted hover:bg-surface-muted">
+                Log in
+              </Link>
+              <Link href="/signup" className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong">
+                Save my data
+              </Link>
+            </>
+          ) : (
             <button
               onClick={handleSignOut}
               className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-surface-muted"
             >
               Log out
             </button>
-          ) : (
-            <>
-              <Link href="/login" className="rounded-full px-4 py-2 text-sm font-medium text-foreground-muted hover:bg-surface-muted">
-                Log in
-              </Link>
-              <Link href="/signup" className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong">
-                Sign up
-              </Link>
-            </>
           )}
         </div>
 
@@ -95,7 +93,7 @@ export function Nav() {
       {open && (
         <nav id="mobile-menu" aria-label="Main" className="border-t border-border bg-surface px-4 py-3 md:hidden">
           <ul className="flex flex-col gap-1">
-            {links.map((link) => (
+            {NAV_LINKS.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
@@ -112,11 +110,7 @@ export function Nav() {
             ))}
           </ul>
           <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-            {loading ? null : user ? (
-              <button onClick={handleSignOut} className="rounded-lg border border-border px-3 py-2.5 text-left text-sm font-medium text-foreground-muted">
-                Log out
-              </button>
-            ) : (
+            {loading || !user ? null : isAnonymous ? (
               <>
                 <Link href="/login" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground-muted hover:bg-surface-muted">
                   Log in
@@ -126,9 +120,13 @@ export function Nav() {
                   onClick={() => setOpen(false)}
                   className="rounded-lg bg-brand px-3 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-strong"
                 >
-                  Sign up
+                  Save my data
                 </Link>
               </>
+            ) : (
+              <button onClick={handleSignOut} className="rounded-lg border border-border px-3 py-2.5 text-left text-sm font-medium text-foreground-muted">
+                Log out
+              </button>
             )}
           </div>
         </nav>

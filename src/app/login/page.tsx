@@ -107,7 +107,7 @@ export default function LoginPage() {
               Forgot password?
             </Link>
             <Link href="/signup" className="underline decoration-border underline-offset-2 hover:text-foreground">
-              Create an account
+              Save my data instead
             </Link>
           </div>
         </form>

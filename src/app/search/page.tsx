@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/lib/supabase/useAuth";
 import { useCoffees } from "@/lib/coffee/useCoffees";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
 import { resolveOverride } from "@/lib/coffee/profileOverrides";
@@ -19,7 +18,6 @@ import type { CoffeeRow } from "@/lib/coffee/coffeeTypes";
 import type { Process, RoastLevel } from "@/lib/coffee/types";
 
 export default function SearchPage() {
-  const { user } = useAuth();
   const { coffees } = useCoffees();
   const overrides = useProfileOverrides();
 
@@ -81,50 +79,41 @@ export default function SearchPage() {
         </label>
       </Card>
 
-      {user ? (
-        <section className="mt-8">
-          <h2 className="mb-3 font-display text-xl font-semibold">Best options from your coffees</h2>
-          {coffees.length === 0 ? (
-            <p className="text-sm text-foreground-muted">
-              You haven’t saved any coffees yet.{" "}
-              <Link href="/coffee/new" className="underline decoration-border underline-offset-2">
-                Add one
-              </Link>{" "}
-              to see it ranked here.
-            </p>
-          ) : rankedCoffees.length === 0 ? (
-            <p className="text-sm text-foreground-muted">No saved coffees match those filters for {formatLong(targetDate)}.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {rankedCoffees.map((result) => (
-                <li key={result.item.id}>
-                  <Link href={`/coffee/${result.item.id}`}>
-                    <Card className="flex flex-wrap items-center justify-between gap-3 transition-shadow hover:shadow-md">
-                      <div>
-                        <p className="font-semibold">{result.item.name}</p>
-                        <p className="text-sm text-foreground-muted">
-                          {result.item.roaster} · {PROCESS_OFFSETS[result.item.process].label} · roasted {formatLong(parseDateOnly(result.item.roast_date))}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <StatusBadge status={result.status} size="sm" />
-                        <span className="text-sm text-foreground-muted">{statusLine(result.window, targetDate)}</span>
-                      </div>
-                    </Card>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ) : (
-        <Card className="mt-8 bg-brand-tint/50 text-sm text-foreground-muted">
-          <Link href="/signup" className="font-medium text-brand-strong underline decoration-border underline-offset-2">
-            Create a free account
-          </Link>{" "}
-          to rank your own saved coffees against this date.
-        </Card>
-      )}
+      <section className="mt-8">
+        <h2 className="mb-3 font-display text-xl font-semibold">Best options from your coffees</h2>
+        {coffees.length === 0 ? (
+          <p className="text-sm text-foreground-muted">
+            You haven’t saved any coffees yet.{" "}
+            <Link href="/coffee/new" className="underline decoration-border underline-offset-2">
+              Add one
+            </Link>{" "}
+            to see it ranked here.
+          </p>
+        ) : rankedCoffees.length === 0 ? (
+          <p className="text-sm text-foreground-muted">No saved coffees match those filters for {formatLong(targetDate)}.</p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {rankedCoffees.map((result) => (
+              <li key={result.item.id}>
+                <Link href={`/coffee/${result.item.id}`}>
+                  <Card className="flex flex-wrap items-center justify-between gap-3 transition-shadow hover:shadow-md">
+                    <div>
+                      <p className="font-semibold">{result.item.name}</p>
+                      <p className="text-sm text-foreground-muted">
+                        {result.item.roaster} · {PROCESS_OFFSETS[result.item.process].label} · roasted {formatLong(parseDateOnly(result.item.roast_date))}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={result.status} size="sm" />
+                      <span className="text-sm text-foreground-muted">{statusLine(result.window, targetDate)}</span>
+                    </div>
+                  </Card>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="mt-10">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

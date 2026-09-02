@@ -67,15 +67,15 @@ export default function HomePage() {
         <Card className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
             <h2 id="account-heading" className="font-display text-xl font-semibold sm:text-2xl">
-              Track your own coffee
+              Track your own coffee — no account needed
             </h2>
             <p className="text-sm text-foreground-muted sm:max-w-xl">
-              Create a free account to save your coffees, see a personal calendar, and get a ranked answer to &ldquo;what should I
-              drink today?&rdquo;
+              Save coffees, see a personal calendar, and get a ranked answer to &ldquo;what should I drink today?&rdquo; right away.
+              Add an email later only if you want your data to survive clearing cookies or follow you to a new device.
             </p>
           </div>
-          <Link href="/signup" className={buttonClasses("secondary", "lg", "shrink-0")}>
-            Create a free account →
+          <Link href="/coffee/new" className={buttonClasses("secondary", "lg", "shrink-0")}>
+            Start tracking →
           </Link>
         </Card>
       </section>
