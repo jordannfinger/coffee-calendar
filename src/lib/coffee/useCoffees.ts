@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { CoffeeRow } from "./coffeeTypes";
 import { useAuth } from "@/lib/supabase/useAuth";
+import { fetchAllPages } from "./fetchAllPages";
 
 export function useCoffees() {
   const { user, loading: authLoading, error: authError, retry: retryAuth } = useAuth();
@@ -18,9 +19,18 @@ export function useCoffees() {
     setLoading(true);
     const supabase = createClient();
     try {
-      const { data, error } = await supabase.from("coffees").select("*").eq("user_id", userId).order("roast_date", { ascending: false });
+      const coffees = await fetchAllPages<CoffeeRow>(async (from, to) => {
+        if (version !== requestVersion.current) throw new Error("Stale inventory request");
+        const { data, count, error } = await supabase.from("coffees")
+          .select("*", { count: "exact" })
+          .eq("user_id", userId)
+          .order("roast_date", { ascending: false })
+          .order("id", { ascending: false })
+          .range(from, to);
+        return { data, count, error };
+      });
       if (version !== requestVersion.current) return;
-      setResult({ userId, coffees: error ? [] : data ?? [], error: error ? "Couldn't load your coffees. Please try again." : null });
+      setResult({ userId, coffees, error: null });
     } catch {
       if (version !== requestVersion.current) return;
       setResult({ userId, coffees: [], error: "Couldn't load your coffees. Please try again." });
