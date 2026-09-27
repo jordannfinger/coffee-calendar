@@ -67,15 +67,15 @@ Every route works immediately for every visitor — nothing is gated behind logi
 
 ## 2. Database schema
 
-Two tables (see [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql)):
+Two tables (see [`supabase/migrations/20260902010646_init.sql`](supabase/migrations/20260902010646_init.sql)):
 
 **`coffees`** — a user's saved coffee inventory. `user_id references auth.users`, RLS restricts every operation to `auth.uid() = user_id`. Required: name, roaster, origin, roast_date, process, roast_level. Everything else (variety, producer, region, elevation, lot, harvest year, tasting notes, brew method, grind setting, recipe, dose, water, personal notes, rating, bag size, remaining %, order date) is optional. `order_date` is intentionally nullable even though the brief lists it as required — it has zero effect on any calculation, and requiring it added form friction with no UX benefit.
 
 **`process_profiles`** — the configurable development model as data, not code. Columns: `process`, `subtype` (nullable — null matches any subtype), `roast_level`, `min_rest_days`, `peak_start_days`, `peak_end_days`, `drinkable_end_days`, `too_old_days`, `confidence`, `notes`. Publicly readable (so the calculator works logged out); writable only by the service role. A row here **overrides** the formula in `model.ts` for its combination — the model can evolve from real feedback without a code deploy. It starts empty; the app works fully on formula defaults with no rows present.
 
-**`brew_logs`** (see [`0003_brew_logs.sql`](supabase/migrations/0003_brew_logs.sql)) — multiple logged brew attempts per coffee, distinct from the single "current recipe" fields on `coffees`: `coffee_id`, `brewed_at`, `brew_method`, `grind_setting`, `dose_g`, `water_g`, `drawdown`, `rating`, `tasting_notes`, `notes`, `locked`. Same owner-only RLS pattern as `coffees`.
+**`brew_logs`** (see [`20260902232910_brew_logs.sql`](supabase/migrations/20260902232910_brew_logs.sql)) — multiple logged brew attempts per coffee, distinct from the single "current recipe" fields on `coffees`: `coffee_id`, `brewed_at`, `brew_method`, `grind_setting`, `dose_g`, `water_g`, `drawdown`, `rating`, `tasting_notes`, `notes`, `locked`. Same owner-only RLS pattern as `coffees`.
 
-**`coffees.storage_method` / `coffees.bag_opened_date`** (see [`0004_storage_and_sharing.sql`](supabase/migrations/0004_storage_and_sharing.sql)) — informational storage tracking; deliberately does **not** feed the calculation engine (see Assumptions below).
+**`coffees.storage_method` / `coffees.bag_opened_date`** (see [`20260902232939_storage_and_sharing.sql`](supabase/migrations/20260902232939_storage_and_sharing.sql)) — informational storage tracking; deliberately does **not** feed the calculation engine (see Assumptions below).
 
 **`coffees.share_token`** — when set (via "Create share link"), the exact token grants access through `get_shared_coffee(token)` to a fixed public column list. The underlying table stays owner-only: personal notes, rating, quantity, owner IDs, and tokens are not returned by the public function. Clearing the token revokes access. Apply the forward privacy migration before deploying the RPC-based public page; existing share URLs remain valid. See [Phase 1 remediation](docs/phase-1-remediation.md) for validation and release prerequisites.
 
@@ -153,14 +153,16 @@ cp .env.example .env.local
 
 Fill in `.env.local` with your Supabase project's URL and anon/publishable key (Project Settings → API in the Supabase dashboard).
 
-Apply the schema — either via the Supabase CLI:
+Apply the schema through the Supabase CLI:
 
 ```bash
 npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-or by running the SQL in `supabase/migrations/0001_init.sql` and `0002_fix_function_search_path.sql` directly in the Supabase SQL editor, in order.
+The migration filenames match the linked project's recorded versions. Keep
+future deployments in migration history rather than running these files
+manually in the hosted SQL editor.
 
 **Enable anonymous sign-ins** — Authentication → Sign In / Providers in the Supabase dashboard → turn on "Allow anonymous sign-ins" → Save. Without this, visitors get a session-setup error instead of being signed in automatically (the app has no login-required fallback).
 

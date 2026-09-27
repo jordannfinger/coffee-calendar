@@ -15,7 +15,9 @@ import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { Card } from "@/components/ui/Card";
 import { ResourceError } from "@/components/ui/ResourceError";
 import { buttonClasses } from "@/components/ui/Button";
-import type { SharedCoffee } from "@/lib/supabase/sharedCoffee";
+import type { Database } from "@/lib/supabase/database.types";
+
+type SharedCoffee = Database["public"]["Functions"]["get_shared_coffee"]["Returns"][number];
 
 function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
   if (value === null || value === undefined || value === "") return null;

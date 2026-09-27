@@ -10,8 +10,8 @@ const privateId = "20000000-0000-4000-8000-000000000002";
 const ownId = "20000000-0000-4000-8000-000000000003";
 const token = "30000000-0000-4000-8000-000000000001";
 const migration = (name: string) => readFileSync(resolve("supabase/migrations", name), "utf8");
-const privacy = migration("20260927105109_protect_coffee_privacy.sql");
-const ownership = migration("20260927105356_enforce_brew_log_owner.sql");
+const privacy = migration("20260927221449_20260927105109_protect_coffee_privacy.sql");
+const ownership = migration("20260927221526_20260927105356_enforce_brew_log_owner.sql");
 
 async function setup() {
   const db = new PGlite();
@@ -26,7 +26,7 @@ async function setup() {
       $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     grant usage on schema auth, public to anon, authenticated;
   `);
-  for (const file of ["0001_init.sql", "0002_fix_function_search_path.sql", "0003_brew_logs.sql", "0004_storage_and_sharing.sql"]) {
+  for (const file of ["20260902010646_init.sql", "20260902010701_fix_function_search_path.sql", "20260902232910_brew_logs.sql", "20260902232939_storage_and_sharing.sql"]) {
     // PGlite lacks pgcrypto; this schema only needs core gen_random_uuid().
     await db.exec(migration(file).replace('create extension if not exists "pgcrypto";', ""));
   }

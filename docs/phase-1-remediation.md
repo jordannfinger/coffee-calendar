@@ -51,7 +51,12 @@ the schema uses PostgreSQL's built-in `gen_random_uuid()`. These tests do not
 validate hosted Auth, PostgREST configuration, deployment grants, or concurrent
 database connections. PGlite is a development-only dependency.
 
-## Release prerequisites — not performed
+## Release prerequisites at the Phase 1 checkpoint — historical
+
+The two migrations were applied to the hosted Coffee Calendar project on
+2026-09-28. See [the deployment record](database-migration-2026-09-28.md) for
+verification and remaining hosted checks. The sequence below records the
+original release requirements.
 
 1. Confirm the hosted project's intended inactive/active state. Do not restore,
    deploy, or apply production migrations without approval.
@@ -66,12 +71,12 @@ database connections. PGlite is a development-only dependency.
 
    If rows exist, agree on their disposition. Neither migration deletes or
    reassigns records automatically.
-3. Apply `20260927105109_protect_coffee_privacy.sql`. This drops the public
+3. Apply `20260927221449_20260927105109_protect_coffee_privacy.sql`. This drops the public
    base-table policy and adds the narrowly scoped public RPC. Its definer
    privilege is intentional: possession of the exact token authorizes only
    this fixed projection. It has an empty search path, no dynamic SQL, and
    explicit execution grants. Do not replace it with a broad public view.
-4. Apply `20260927105356_enforce_brew_log_owner.sql`. It locks writes during
+4. Apply `20260927221526_20260927105356_enforce_brew_log_owner.sql`. It locks writes during
    preflight/constraint creation and fails atomically if ownership mismatches
    exist. It is separate so a blocked ownership repair does not prevent the
    privacy fix from being applied.
