@@ -14,13 +14,14 @@ import { CoffeeCard } from "@/components/coffee/CoffeeCard";
 import { exportCoffeesAsCsv, exportCoffeesAsJson } from "@/lib/coffee/exportCoffees";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ResourceError } from "@/components/ui/ResourceError";
 import { baseInputClasses } from "@/components/ui/Field";
 import type { CoffeeStatus } from "@/lib/coffee/types";
 
 type SortKey = "status" | "roast_date_desc" | "roast_date_asc" | "name";
 
 function MyCoffeeContent() {
-  const { coffees, loading, error } = useCoffees();
+  const { coffees, loading, error, refresh } = useCoffees();
   const overrides = useProfileOverrides();
   const now = useToday();
 
@@ -88,7 +89,7 @@ function MyCoffeeContent() {
       </div>
 
       {loading && <p className="text-sm text-foreground-muted">Loading your coffees…</p>}
-      {error && <p className="text-sm font-medium text-status-not-ready-text">{error}</p>}
+      {error && <ResourceError message={error} retry={refresh} />}
 
       {!loading && !error && coffees.length === 0 && (
         <Card className="flex flex-col items-center gap-3 py-12 text-center">

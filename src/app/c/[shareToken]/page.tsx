@@ -13,6 +13,7 @@ import { Timeline } from "@/components/coffee/Timeline";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { Card } from "@/components/ui/Card";
+import { ResourceError } from "@/components/ui/ResourceError";
 import { buttonClasses } from "@/components/ui/Button";
 import type { SharedCoffee } from "@/lib/supabase/sharedCoffee";
 
@@ -34,6 +35,7 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,24 +46,27 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
     setCoffee(null);
     setNotFound(false);
     setError(null);
-    supabase
-      .rpc("get_shared_coffee", { token: shareToken })
-      .maybeSingle()
-      .then(({ data, error }) => {
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_shared_coffee", { token: shareToken }).maybeSingle();
         if (cancelled) return;
         if (error && error.code !== "22P02") setError("Couldn't load this share link. Please try again.");
         else if (!data) setNotFound(true);
         else setCoffee(data);
-        setLoading(false);
-      });
+      } catch {
+        if (!cancelled) setError("Couldn't load this share link. Please try again.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [shareToken]);
+  }, [shareToken, attempt]);
 
   if (loading) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6" aria-busy="true" />;
 
-  if (error) return <p role="alert" className="mx-auto max-w-3xl px-4 py-14 sm:px-6">{error}</p>;
+  if (error) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6"><ResourceError message={error} retry={() => setAttempt(value => value + 1)} /></div>;
 
   if (notFound || !coffee) {
     return (

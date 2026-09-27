@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "./client";
 import { ensureSession } from "./ensureSession";
@@ -17,6 +17,12 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setAttempt(value => value + 1);
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -55,7 +61,7 @@ export function useAuth() {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [attempt]);
 
-  return { user, loading, error, isAnonymous: user?.is_anonymous ?? false };
+  return { user, loading, error, retry, isAnonymous: user?.is_anonymous ?? false };
 }

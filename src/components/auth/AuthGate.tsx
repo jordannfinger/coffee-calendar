@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
  * case session setup itself fails (e.g. a network hiccup).
  */
 export function AuthGate({ title, children }: { title: string; children: ReactNode }) {
-  const { user, loading, error } = useAuth();
+  const { user, loading, error, retry } = useAuth();
 
   if (loading) {
     return <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6" aria-busy="true" aria-live="polite" />;
@@ -26,7 +26,7 @@ export function AuthGate({ title, children }: { title: string; children: ReactNo
           <p className="text-sm text-foreground-muted">
             {error ? "Couldn't start your session — check your connection and try again." : "Something went wrong starting your session."}
           </p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <Button onClick={retry}>Retry</Button>
         </Card>
       </div>
     );

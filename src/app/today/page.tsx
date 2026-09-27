@@ -14,6 +14,7 @@ import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { Card } from "@/components/ui/Card";
+import { ResourceError } from "@/components/ui/ResourceError";
 import { buttonClasses } from "@/components/ui/Button";
 import { hasCoffeeRemaining, type CoffeeRow } from "@/lib/coffee/coffeeTypes";
 
@@ -23,7 +24,7 @@ const RANK_HEADLINE: Record<number, string> = {
 };
 
 function TodayContent() {
-  const { coffees, loading } = useCoffees();
+  const { coffees, loading, error, refresh } = useCoffees();
   const overrides = useProfileOverrides();
   const targetDate = useToday();
 
@@ -44,6 +45,8 @@ function TodayContent() {
     ranked.map((r) => ({ item: r.item, window: r.window })),
     targetDate,
   );
+
+  if (error) return <div className="mx-auto max-w-3xl px-4 py-10"><ResourceError message={error} retry={refresh} /></div>;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">

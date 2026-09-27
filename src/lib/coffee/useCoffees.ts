@@ -6,7 +6,7 @@ import type { CoffeeRow } from "./coffeeTypes";
 import { useAuth } from "@/lib/supabase/useAuth";
 
 export function useCoffees() {
-  const { user, loading: authLoading, error: authError } = useAuth();
+  const { user, loading: authLoading, error: authError, retry: retryAuth } = useAuth();
   const userId = user?.id;
   const [result, setResult] = useState<{ userId: string; coffees: CoffeeRow[]; error: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ export function useCoffees() {
     try {
       const { data, error } = await supabase.from("coffees").select("*").eq("user_id", userId).order("roast_date", { ascending: false });
       if (version !== requestVersion.current) return;
-      setResult({ userId, coffees: error ? [] : data ?? [], error: error?.message ?? null });
+      setResult({ userId, coffees: error ? [] : data ?? [], error: error ? "Couldn't load your coffees. Please try again." : null });
     } catch {
       if (version !== requestVersion.current) return;
       setResult({ userId, coffees: [], error: "Couldn't load your coffees. Please try again." });
@@ -45,6 +45,6 @@ export function useCoffees() {
     coffees: current?.coffees ?? [],
     loading: authLoading || (!!userId && (loading || !current)),
     error: authError ?? current?.error ?? null,
-    refresh,
+    refresh: authError ? retryAuth : refresh,
   };
 }

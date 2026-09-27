@@ -1,37 +1,18 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { CoffeeForm } from "@/components/coffee/CoffeeForm";
-import { rowToFormValues, formValuesToInsert, type CoffeeFormValues, type CoffeeRow } from "@/lib/coffee/coffeeTypes";
+import { rowToFormValues, formValuesToInsert, type CoffeeFormValues } from "@/lib/coffee/coffeeTypes";
 import { createClient } from "@/lib/supabase/client";
+import { useCoffee } from "@/lib/coffee/useCoffee";
+import { ResourceError } from "@/components/ui/ResourceError";
 
 function EditCoffeeContent({ id }: { id: string }) {
   const router = useRouter();
-  const [coffee, setCoffee] = useState<CoffeeRow | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const supabase = createClient();
-    supabase
-      .from("coffees")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return;
-        if (!data) setNotFound(true);
-        else setCoffee(data);
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+  const { coffee, loading, error, refresh } = useCoffee(id);
 
   async function handleSubmit(values: CoffeeFormValues) {
     if (!values.roastDate) return { error: "Roast date is required." };
@@ -39,15 +20,16 @@ function EditCoffeeContent({ id }: { id: string }) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { error: "You've been signed out — please log in again." };
+    if (!user) return { error: "Couldn't verify your session. Please try again." };
 
-    const { error } = await supabase.from("coffees").update(formValuesToInsert(values, user.id)).eq("id", id);
-    if (error) return { error: error.message };
+    const { data, error } = await supabase.from("coffees").update(formValuesToInsert(values, user.id)).eq("id", id).select("id").single();
+    if (error || !data) return { error: "Couldn't confirm the save. Your draft is preserved; please try again." };
     router.push(`/coffee/${id}`);
   }
 
   if (loading) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6" aria-busy="true" />;
-  if (notFound || !coffee) {
+  if (error) return <div className="mx-auto max-w-3xl px-4 py-10"><ResourceError message={error} retry={refresh} /></div>;
+  if (!coffee) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6">
         <p className="text-foreground-muted">Coffee not found.</p>
@@ -61,7 +43,7 @@ function EditCoffeeContent({ id }: { id: string }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <h1 className="mb-6 font-display text-3xl font-semibold">Edit {coffee.name}</h1>
-      <CoffeeForm initialValues={rowToFormValues(coffee)} onSubmit={handleSubmit} submitLabel="Save changes" />
+      <CoffeeForm key={id} initialValues={rowToFormValues(coffee)} onSubmit={handleSubmit} submitLabel="Save changes" />
     </div>
   );
 }

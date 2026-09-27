@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { CoffeeForm } from "@/components/coffee/CoffeeForm";
 import { EMPTY_COFFEE_FORM, formValuesToInsert, type CoffeeFormValues } from "@/lib/coffee/coffeeTypes";
@@ -9,6 +10,8 @@ import { formatDateOnly, today } from "@/lib/coffee/dateUtils";
 
 function AddCoffeeContent() {
   const router = useRouter();
+  // Reuse the ID after an uncertain response so a retry cannot insert a second bag.
+  const draftId = useRef<string | null>(null);
 
   async function handleSubmit(values: CoffeeFormValues) {
     if (!values.roastDate) {
@@ -18,15 +21,15 @@ function AddCoffeeContent() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { error: "You've been signed out — please log in again." };
+    if (!user) return { error: "Couldn't verify your session. Please try again." };
 
     const { data, error } = await supabase
       .from("coffees")
-      .insert(formValuesToInsert(values, user.id))
+      .upsert({ ...formValuesToInsert(values, user.id), id: draftId.current ??= crypto.randomUUID() }, { onConflict: "id" })
       .select("id")
       .single();
 
-    if (error) return { error: error.message };
+    if (error || !data) return { error: "Couldn't confirm the save. Your draft is preserved; check My Coffee before retrying." };
     router.push(`/coffee/${data.id}`);
   }
 

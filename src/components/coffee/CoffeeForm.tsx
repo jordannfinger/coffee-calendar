@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { ValidationError } from "@/lib/coffee/validation";
 import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS, subtypesFor } from "@/lib/coffee/options";
 import type { CoffeeFormValues } from "@/lib/coffee/coffeeTypes";
 import type { Process, RoastLevel } from "@/lib/coffee/types";
@@ -22,6 +23,7 @@ export function CoffeeForm({
   const now = useToday();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pending = useRef(false);
 
   function set<K extends keyof CoffeeFormValues>(key: K, value: CoffeeFormValues[K]) {
     setValues((v) => ({ ...v, [key]: value }));
@@ -29,18 +31,26 @@ export function CoffeeForm({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (pending.current) return;
+    pending.current = true;
     setError(null);
     setLoading(true);
-    const result = await onSubmit(values);
-    setLoading(false);
-    if (result?.error) setError(result.error);
+    try {
+      const result = await onSubmit(values);
+      if (result?.error) setError(result.error);
+    } catch (cause) {
+      setError(cause instanceof ValidationError ? cause.message : "Couldn't confirm the save. Your draft is preserved; check your connection and try again.");
+    } finally {
+      pending.current = false;
+      setLoading(false);
+    }
   }
 
   const subtypeOptions = subtypesFor(values.process);
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-8" noValidate>
-      <fieldset className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+      <fieldset disabled={loading} className="flex flex-col gap-4">
         <legend className="mb-1 font-display text-lg font-semibold">The basics</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Coffee name" htmlFor="f-name">
@@ -128,7 +138,7 @@ export function CoffeeForm({
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4">
+      <fieldset disabled={loading} className="flex flex-col gap-4">
         <legend className="mb-1 font-display text-lg font-semibold">Origin detail (optional)</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Variety" htmlFor="f-variety">
@@ -141,13 +151,13 @@ export function CoffeeForm({
             <input id="f-region" className={baseInputClasses} value={values.region} onChange={(e) => set("region", e.target.value)} placeholder="Guji" />
           </Field>
           <Field label="Elevation (m)" htmlFor="f-elevation">
-            <input id="f-elevation" type="number" inputMode="numeric" className={baseInputClasses} value={values.elevationM} onChange={(e) => set("elevationM", e.target.value)} />
+            <input id="f-elevation" type="number" min={0} max={2147483647} step={1} inputMode="numeric" className={baseInputClasses} value={values.elevationM} onChange={(e) => set("elevationM", e.target.value)} />
           </Field>
           <Field label="Lot" htmlFor="f-lot">
             <input id="f-lot" className={baseInputClasses} value={values.lot} onChange={(e) => set("lot", e.target.value)} />
           </Field>
           <Field label="Harvest year" htmlFor="f-harvest-year">
-            <input id="f-harvest-year" type="number" inputMode="numeric" className={baseInputClasses} value={values.harvestYear} onChange={(e) => set("harvestYear", e.target.value)} />
+            <input id="f-harvest-year" type="number" min={1} max={9999} step={1} inputMode="numeric" className={baseInputClasses} value={values.harvestYear} onChange={(e) => set("harvestYear", e.target.value)} />
           </Field>
         </div>
         <Field label="Tasting notes" htmlFor="f-tasting-notes">
@@ -155,7 +165,7 @@ export function CoffeeForm({
         </Field>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4">
+      <fieldset disabled={loading} className="flex flex-col gap-4">
         <legend className="mb-1 font-display text-lg font-semibold">Brewing (optional)</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Brew method" htmlFor="f-brew-method">
@@ -165,10 +175,10 @@ export function CoffeeForm({
             <input id="f-grind-setting" className={baseInputClasses} value={values.grindSetting} onChange={(e) => set("grindSetting", e.target.value)} />
           </Field>
           <Field label="Dose (g)" htmlFor="f-dose">
-            <input id="f-dose" type="number" inputMode="decimal" step="0.1" className={baseInputClasses} value={values.doseG} onChange={(e) => set("doseG", e.target.value)} />
+            <input id="f-dose" type="number" min={0.1} max={9999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={values.doseG} onChange={(e) => set("doseG", e.target.value)} />
           </Field>
           <Field label="Water (g)" htmlFor="f-water">
-            <input id="f-water" type="number" inputMode="decimal" step="0.1" className={baseInputClasses} value={values.waterG} onChange={(e) => set("waterG", e.target.value)} />
+            <input id="f-water" type="number" min={0.1} max={99999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={values.waterG} onChange={(e) => set("waterG", e.target.value)} />
           </Field>
         </div>
         <Field label="Recipe" htmlFor="f-recipe">
@@ -176,14 +186,14 @@ export function CoffeeForm({
         </Field>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4">
+      <fieldset disabled={loading} className="flex flex-col gap-4">
         <legend className="mb-1 font-display text-lg font-semibold">Personal (optional)</legend>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Rating (1–5)" htmlFor="f-rating">
             <input id="f-rating" type="number" min={1} max={5} className={baseInputClasses} value={values.rating} onChange={(e) => set("rating", e.target.value)} />
           </Field>
           <Field label="Bag size (g)" htmlFor="f-bag-size">
-            <input id="f-bag-size" type="number" inputMode="decimal" step="0.1" className={baseInputClasses} value={values.bagSizeG} onChange={(e) => set("bagSizeG", e.target.value)} />
+            <input id="f-bag-size" type="number" min={0.1} max={99999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={values.bagSizeG} onChange={(e) => set("bagSizeG", e.target.value)} />
           </Field>
           <Field label="Remaining (%)" htmlFor="f-remaining">
             <input id="f-remaining" type="number" min={0} max={100} className={baseInputClasses} value={values.remainingPercent} onChange={(e) => set("remainingPercent", e.target.value)} />
@@ -194,7 +204,7 @@ export function CoffeeForm({
         </Field>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4">
+      <fieldset disabled={loading} className="flex flex-col gap-4">
         <legend className="mb-1 font-display text-lg font-semibold">Storage (optional)</legend>
         <p className="-mt-2 text-xs text-foreground-muted">Tracked for reference only — doesn&rsquo;t change the estimate.</p>
         <div className="grid gap-4 sm:grid-cols-2">

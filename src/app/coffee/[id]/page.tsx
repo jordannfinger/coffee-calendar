@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { createClient } from "@/lib/supabase/client";
-import type { CoffeeRow } from "@/lib/coffee/coffeeTypes";
+import { useCoffee } from "@/lib/coffee/useCoffee";
+import { ResourceError } from "@/components/ui/ResourceError";
 import { calculateCoffeeWindow, getCoffeeStatus } from "@/lib/coffee/engine";
 import { parseDateOnly } from "@/lib/coffee/dateUtils";
 import { useToday } from "@/lib/coffee/useToday";
@@ -32,44 +33,34 @@ function DetailRow({ label, value }: { label: string; value?: string | number | 
 
 function CoffeeDetailContent({ id }: { id: string }) {
   const router = useRouter();
-  const [coffee, setCoffee] = useState<CoffeeRow | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const { coffee, loading, error, refresh, setCoffee } = useCoffee(id);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const pendingDelete = useRef(false);
   const overrides = useProfileOverrides();
   const now = useToday();
 
-  useEffect(() => {
-    let cancelled = false;
-    const supabase = createClient();
-    supabase
-      .from("coffees")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return;
-        if (!data) setNotFound(true);
-        else setCoffee(data);
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
   async function handleDelete() {
-    if (!coffee) return;
+    if (!coffee || pendingDelete.current) return;
     if (!window.confirm(`Delete "${coffee.name}"? This can't be undone.`)) return;
+    pendingDelete.current = true;
     setDeleting(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("coffees").delete().eq("id", coffee.id);
-    setDeleting(false);
-    if (!error) router.push("/coffee");
+    setDeleteError(null);
+    try {
+      const { data, error } = await createClient().from("coffees").delete().eq("id", coffee.id).select("id").single();
+      if (error || !data) throw new Error("Delete not confirmed");
+      router.push("/coffee");
+    } catch {
+      setDeleteError("Couldn't confirm deletion. This coffee is still shown; retry or refresh to check its status.");
+    } finally {
+      pendingDelete.current = false;
+      setDeleting(false);
+    }
   }
 
   if (loading) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6" aria-busy="true" />;
-  if (notFound || !coffee) {
+  if (error) return <div className="mx-auto max-w-3xl px-4 py-10"><ResourceError message={error} retry={refresh} /></div>;
+  if (!coffee) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6">
         <p className="text-foreground-muted">Coffee not found.</p>
@@ -108,6 +99,7 @@ function CoffeeDetailContent({ id }: { id: string }) {
         </div>
       </div>
 
+      {deleteError && <p role="alert" className="mb-4 text-sm text-status-not-ready-text">{deleteError}</p>}
       <Card className="mb-6 flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-lg font-semibold">Drinking window</h2>

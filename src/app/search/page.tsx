@@ -14,12 +14,13 @@ import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { statusLine } from "@/components/coffee/CoffeeCard";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { Card } from "@/components/ui/Card";
+import { ResourceError } from "@/components/ui/ResourceError";
 import { Field, baseInputClasses } from "@/components/ui/Field";
 import { hasCoffeeRemaining, type CoffeeRow } from "@/lib/coffee/coffeeTypes";
 import type { Process, RoastLevel } from "@/lib/coffee/types";
 
 export default function SearchPage() {
-  const { coffees } = useCoffees();
+  const { coffees, loading, error, refresh } = useCoffees();
   const overrides = useProfileOverrides();
 
   const now = useToday();
@@ -84,7 +85,9 @@ export default function SearchPage() {
 
       <section className="mt-8">
         <h2 className="mb-3 font-display text-xl font-semibold">Best options from your coffees</h2>
-        {coffees.length === 0 ? (
+        {loading ? <p className="text-sm text-foreground-muted">Loading your coffees…</p> : error ? (
+          <ResourceError message={error} retry={refresh} />
+        ) : coffees.length === 0 ? (
           <p className="text-sm text-foreground-muted">
             You haven’t saved any coffees yet.{" "}
             <Link href="/coffee/new" className="underline decoration-border underline-offset-2">

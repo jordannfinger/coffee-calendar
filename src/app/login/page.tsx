@@ -74,7 +74,7 @@ export default function LoginPage() {
       </div>
 
       {mode === "password" ? (
-        <form onSubmit={handlePasswordLogin} className="flex flex-col gap-4" noValidate>
+        <form onSubmit={handlePasswordLogin} className="flex flex-col gap-4">
           <Field label="Email" htmlFor="login-email">
             <input
               id="login-email"
@@ -119,7 +119,7 @@ export default function LoginPage() {
           Check <strong className="text-foreground">{email}</strong> for a link to log in — you can close this tab.
         </p>
       ) : (
-        <form onSubmit={handleMagicLink} className="flex flex-col gap-4" noValidate>
+        <form onSubmit={handleMagicLink} className="flex flex-col gap-4">
           <Field label="Email" htmlFor="login-magic-email" hint="We'll send a one-time link — no password needed.">
             <input
               id="login-magic-email"

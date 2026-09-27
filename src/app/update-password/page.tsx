@@ -51,7 +51,7 @@ export default function UpdatePasswordPage() {
 
   return (
     <AuthCard title="Set a new password" subtitle="You followed a password reset link — choose a new password below.">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field label="New password" htmlFor="update-password" hint="At least 8 characters.">
           <input
             id="update-password"

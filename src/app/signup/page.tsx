@@ -77,7 +77,7 @@ export default function SignupPage() {
 
   return (
     <AuthCard title="Save your data" subtitle="Add an email and password so your coffees survive clearing cookies or a new device — everything you've added stays exactly as it is.">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field label="Email" htmlFor="signup-email">
           <input
             id="signup-email"

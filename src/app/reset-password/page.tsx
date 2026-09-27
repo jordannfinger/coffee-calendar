@@ -40,7 +40,7 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthCard title="Reset your password" subtitle="We'll email you a link to set a new one.">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field label="Email" htmlFor="reset-email">
           <input
             id="reset-email"

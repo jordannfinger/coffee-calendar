@@ -1,5 +1,8 @@
 import type { Tables, TablesInsert } from "@/lib/supabase/database.types";
 import type { Process, RoastLevel } from "./types";
+import { optionalNumber, requiredText, validDate, ValidationError } from "./validation";
+import { formatDateOnly, today } from "./dateUtils";
+import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS } from "./options";
 
 export type CoffeeRow = Tables<"coffees">;
 export type CoffeeInsert = TablesInsert<"coffees">;
@@ -103,53 +106,41 @@ export function rowToFormValues(row: CoffeeRow): CoffeeFormValues {
   };
 }
 
-function toIntOrNull(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function toNumberOrNull(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number.parseFloat(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function toTextOrNull(value: string): string | null {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
 }
 
 export function formValuesToInsert(values: CoffeeFormValues, userId: string): CoffeeInsert {
+  if (!PROCESS_OPTIONS.some(option => option.value === values.process)) throw new ValidationError("Choose a valid process.");
+  if (!ROAST_LEVEL_OPTIONS.some(option => option.value === values.roastLevel)) throw new ValidationError("Choose a valid roast level.");
   return {
     user_id: userId,
-    name: values.name.trim(),
-    roaster: values.roaster.trim(),
-    origin: values.origin.trim(),
-    roast_date: values.roastDate,
+    name: requiredText(values.name, "Coffee name"),
+    roaster: requiredText(values.roaster, "Roaster"),
+    origin: requiredText(values.origin, "Origin"),
+    roast_date: validDate(values.roastDate, "Roast date", formatDateOnly(today())),
     process: values.process,
     process_subtype: toTextOrNull(values.processSubtype),
     roast_level: values.roastLevel,
-    order_date: toTextOrNull(values.orderDate),
+    order_date: values.orderDate.trim() ? validDate(values.orderDate, "Date ordered") : null,
     variety: toTextOrNull(values.variety),
     producer: toTextOrNull(values.producer),
     region: toTextOrNull(values.region),
-    elevation_m: toIntOrNull(values.elevationM),
+    elevation_m: optionalNumber(values.elevationM, "Elevation", 0, 2147483647, true),
     lot: toTextOrNull(values.lot),
-    harvest_year: toIntOrNull(values.harvestYear),
+    harvest_year: optionalNumber(values.harvestYear, "Harvest year", 1, 9999, true),
     tasting_notes: toTextOrNull(values.tastingNotes),
     brew_method: toTextOrNull(values.brewMethod),
     grind_setting: toTextOrNull(values.grindSetting),
     recipe: toTextOrNull(values.recipe),
-    dose_g: toNumberOrNull(values.doseG),
-    water_g: toNumberOrNull(values.waterG),
+    dose_g: optionalNumber(values.doseG, "Dose", 0.1, 9999.9),
+    water_g: optionalNumber(values.waterG, "Water", 0.1, 99999.9),
     notes: toTextOrNull(values.notes),
-    rating: toIntOrNull(values.rating),
-    bag_size_g: toNumberOrNull(values.bagSizeG),
-    remaining_percent: toIntOrNull(values.remainingPercent),
+    rating: optionalNumber(values.rating, "Rating", 1, 5, true),
+    bag_size_g: optionalNumber(values.bagSizeG, "Bag size", 0.1, 99999.9),
+    remaining_percent: optionalNumber(values.remainingPercent, "Remaining percentage", 0, 100, true),
     storage_method: toTextOrNull(values.storageMethod),
-    bag_opened_date: toTextOrNull(values.bagOpenedDate),
+    bag_opened_date: values.bagOpenedDate.trim() ? validDate(values.bagOpenedDate, "Bag opened date") : null,
   };
 }

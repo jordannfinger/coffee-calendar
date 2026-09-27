@@ -10,6 +10,7 @@ import { calculateCoffeeWindow, getCoffeeStatus, STATUS_META } from "@/lib/coffe
 import { isSameDay, parseDateOnly } from "@/lib/coffee/dateUtils";
 import { useToday } from "@/lib/coffee/useToday";
 import { Card } from "@/components/ui/Card";
+import { ResourceError } from "@/components/ui/ResourceError";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import type { CoffeeStatus } from "@/lib/coffee/types";
 import clsx from "clsx";
@@ -32,7 +33,7 @@ function daysInMonth(year: number, month: number): Date[] {
 }
 
 function CalendarContent() {
-  const { coffees, loading } = useCoffees();
+  const { coffees, loading, error, refresh } = useCoffees();
   const overrides = useProfileOverrides();
   const now = useToday();
   const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
@@ -61,6 +62,8 @@ function CalendarContent() {
   function goToMonth(delta: number) {
     setSelectedMonth(new Date(year, month + delta, 1));
   }
+
+  if (error) return <div className="mx-auto max-w-6xl px-4 py-10"><ResourceError message={error} retry={refresh} /></div>;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
