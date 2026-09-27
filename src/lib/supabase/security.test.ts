@@ -12,6 +12,7 @@ const token = "30000000-0000-4000-8000-000000000001";
 const migration = (name: string) => readFileSync(resolve("supabase/migrations", name), "utf8");
 const privacy = migration("20260927221449_20260927105109_protect_coffee_privacy.sql");
 const ownership = migration("20260927221526_20260927105356_enforce_brew_log_owner.sql");
+const ownerIndex = migration("20260927231708_index_brew_log_owner.sql");
 
 async function setup() {
   const db = new PGlite();
@@ -59,6 +60,9 @@ it("enforces private inventories, token-only public fields, revocation and brew 
     await db.exec("reset role; delete from public.brew_logs;");
     await db.exec(privacy);
     await db.exec(ownership);
+    await db.exec(ownerIndex);
+    expect((await db.query<{ indexname: string }>("select indexname from pg_indexes where schemaname = 'public' and tablename = 'brew_logs' and indexname like 'brew_logs_coffee_%' order by indexname")).rows)
+      .toEqual([{ indexname: "brew_logs_coffee_owner_idx" }]);
 
     await asRole(db, "anon");
     expect((await db.query("select * from public.coffees")).rows).toEqual([]);

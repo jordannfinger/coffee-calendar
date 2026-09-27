@@ -64,3 +64,22 @@ The table held zero brew logs at migration time; index design can be measured
 and handled in a later migration before that table grows. Existing RLS policies
 also trigger the [per-row `auth.uid()` evaluation warning](https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan).
 Those performance notices were not changed during this security migration.
+
+## Phase 5 index follow-through
+
+On 2026-09-28, the hosted performance advisor still reported the composite
+`brew_logs(coffee_id, user_id)` foreign key without a covering index. The
+`index_brew_log_owner` migration was applied as hosted version `20260927231708`.
+It replaces the old `coffee_id` index with a composite index whose leading
+column still supports coffee-only lookups. The hosted index definition was
+verified and the unindexed-foreign-key notice disappeared. No brew-log rows
+existed at migration time.
+
+A hosted transaction created a temporary shared coffee, read its approved
+fields through `get_shared_coffee` under the `anon` role, then rolled back.
+The coffee count remained 7, and the temporary token returned no result after
+rollback. This verifies positive RPC behavior without leaving test data.
+In a separate rollback transaction, a temporary second owner saw only their
+own coffee under the `authenticated` role and JWT subject; none of the seven
+existing owner's coffees were visible. The temporary Auth user and coffee were
+absent afterward.
