@@ -11,34 +11,7 @@ import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { Card } from "@/components/ui/Card";
 import { buttonClasses } from "@/components/ui/Button";
-import type { Process, RoastLevel } from "@/lib/coffee/types";
-
-// A deliberately narrow, curated set of columns — personal fields (notes,
-// rating, remaining quantity, order date) are never selected here, even
-// though RLS permits reading the full row once share_token is set.
-const PUBLIC_COLUMNS =
-  "name, roaster, origin, region, producer, variety, elevation_m, process, process_subtype, roast_level, roast_date, tasting_notes, brew_method, grind_setting, recipe, dose_g, water_g, storage_method";
-
-interface SharedCoffee {
-  name: string;
-  roaster: string;
-  origin: string;
-  region: string | null;
-  producer: string | null;
-  variety: string | null;
-  elevation_m: number | null;
-  process: Process;
-  process_subtype: string | null;
-  roast_level: RoastLevel;
-  roast_date: string;
-  tasting_notes: string | null;
-  brew_method: string | null;
-  grind_setting: string | null;
-  recipe: string | null;
-  dose_g: number | null;
-  water_g: number | null;
-  storage_method: string | null;
-}
+import type { SharedCoffee } from "@/lib/supabase/sharedCoffee";
 
 function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
   if (value === null || value === undefined || value === "") return null;
@@ -55,19 +28,25 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
   const [coffee, setCoffee] = useState<SharedCoffee | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const supabase = createClient();
+    // A token change must not leave a previous coffee or failure on screen.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    setCoffee(null);
+    setNotFound(false);
+    setError(null);
     supabase
-      .from("coffees")
-      .select(PUBLIC_COLUMNS)
-      .eq("share_token", shareToken)
+      .rpc("get_shared_coffee", { token: shareToken })
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
-        if (!data) setNotFound(true);
-        else setCoffee(data as unknown as SharedCoffee);
+        if (error && error.code !== "22P02") setError("Couldn't load this share link. Please try again.");
+        else if (!data) setNotFound(true);
+        else setCoffee(data);
         setLoading(false);
       });
     return () => {
@@ -76,6 +55,8 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
   }, [shareToken]);
 
   if (loading) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6" aria-busy="true" />;
+
+  if (error) return <p role="alert" className="mx-auto max-w-3xl px-4 py-14 sm:px-6">{error}</p>;
 
   if (notFound || !coffee) {
     return (

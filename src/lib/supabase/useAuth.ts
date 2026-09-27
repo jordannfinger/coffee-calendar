@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "./client";
+import { ensureSession } from "./ensureSession";
 
 /**
  * Every visitor gets a session automatically — no login screen required.
@@ -20,36 +21,34 @@ export function useAuth() {
   useEffect(() => {
     const supabase = createClient();
     let cancelled = false;
-
-    async function ensureSession() {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        if (!cancelled) {
-          setUser(data.user);
-          setLoading(false);
-        }
-        return;
-      }
-
-      const { data: anon, error } = await supabase.auth.signInAnonymously();
-      if (cancelled) return;
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
-      setUser(anon.user);
-      setLoading(false);
-    }
-
-    ensureSession();
+    let authVersion = 0;
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
+      // INITIAL_SESSION(null) is not a failed startup: anonymous signup may still be pending.
+      if (cancelled || _event === "INITIAL_SESSION") return;
+      authVersion++;
       setUser(session?.user ?? null);
+      setError(null);
       setLoading(false);
+    });
+
+    const initialVersion = authVersion;
+    // Defer so an already-unmounted consumer cannot start anonymous signup.
+    void Promise.resolve().then(async () => {
+      if (cancelled) return;
+      try {
+        const currentUser = await ensureSession();
+        if (cancelled || authVersion !== initialVersion) return;
+        setUser(currentUser);
+        setError(null);
+      } catch (cause) {
+        if (cancelled || authVersion !== initialVersion) return;
+        setError(cause instanceof Error ? cause.message : "Couldn't start your session. Please try again.");
+      } finally {
+        if (!cancelled && authVersion === initialVersion) setLoading(false);
+      }
     });
 
     return () => {

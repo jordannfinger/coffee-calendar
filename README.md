@@ -77,7 +77,7 @@ Two tables (see [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_i
 
 **`coffees.storage_method` / `coffees.bag_opened_date`** (see [`0004_storage_and_sharing.sql`](supabase/migrations/0004_storage_and_sharing.sql)) — informational storage tracking; deliberately does **not** feed the calculation engine (see Assumptions below).
 
-**`coffees.share_token`** — when set (via the "Create share link" button on a coffee's detail page), an *additional* RLS select policy makes that one row publicly readable regardless of who's asking, at `/c/[shareToken]`. The public page only ever queries a curated, hardcoded column list (name, origin, process, roast info, tasting/brewing detail) — personal fields like `notes`, `rating`, and `remaining_percent` are never requested by that page's code, even though RLS would technically permit it.
+**`coffees.share_token`** — when set (via "Create share link"), the exact token grants access through `get_shared_coffee(token)` to a fixed public column list. The underlying table stays owner-only: personal notes, rating, quantity, owner IDs, and tokens are not returned by the public function. Clearing the token revokes access. Apply the forward privacy migration before deploying the RPC-based public page; existing share URLs remain valid. See [Phase 1 remediation](docs/phase-1-remediation.md) for validation and release prerequisites.
 
 ---
 

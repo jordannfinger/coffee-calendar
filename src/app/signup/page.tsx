@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { ensureSession } from "@/lib/supabase/ensureSession";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Field, baseInputClasses } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
@@ -30,9 +31,16 @@ export default function SignupPage() {
 
     setLoading(true);
     const supabase = createClient();
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser();
+    let currentUser;
+    try {
+      // Wait for the same guest initialization as Nav/AuthGate; never replace
+      // a guest with a new account merely because validation is unavailable.
+      currentUser = await ensureSession();
+    } catch {
+      setError("Couldn't verify your session. Please try again; your saved data has not been changed.");
+      setLoading(false);
+      return;
+    }
 
     // If we already have an anonymous session, LINK it to a real account
     // instead of creating a separate one — this keeps the same user id, so

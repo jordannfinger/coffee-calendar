@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { waitForSessionInitialization } from "@/lib/supabase/ensureSession";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Field, baseInputClasses } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +24,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    await waitForSessionInitialization();
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
@@ -38,6 +40,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    await waitForSessionInitialization();
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
