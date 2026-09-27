@@ -4,7 +4,10 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { calculateCoffeeWindow, getCoffeeStatus } from "@/lib/coffee/engine";
-import { parseDateOnly, today } from "@/lib/coffee/dateUtils";
+import { parseDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
+import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
+import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { PROCESS_OFFSETS, ROAST_LEVEL_BASELINE } from "@/lib/coffee/model";
 import { Timeline } from "@/components/coffee/Timeline";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
@@ -25,6 +28,8 @@ function DetailRow({ label, value }: { label: string; value?: string | number | 
 
 export default function SharedCoffeePage({ params }: { params: Promise<{ shareToken: string }> }) {
   const { shareToken } = use(params);
+  const now = useToday();
+  const overrides = useProfileOverrides();
   const [coffee, setCoffee] = useState<SharedCoffee | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -74,8 +79,9 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
     process: coffee.process,
     processSubtype: coffee.process_subtype,
     roastLevel: coffee.roast_level,
+    overrideProfile: resolveOverride(overrides, coffee.process, coffee.process_subtype, coffee.roast_level),
   });
-  const status = getCoffeeStatus(coffeeWindow, today());
+  const status = getCoffeeStatus(coffeeWindow, now);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">

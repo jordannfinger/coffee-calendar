@@ -7,7 +7,8 @@ import { useCoffees } from "@/lib/coffee/useCoffees";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
 import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { calculateCoffeeWindow, getCoffeeStatus, STATUS_META } from "@/lib/coffee/engine";
-import { isSameDay, parseDateOnly, today } from "@/lib/coffee/dateUtils";
+import { isSameDay, parseDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { Card } from "@/components/ui/Card";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import type { CoffeeStatus } from "@/lib/coffee/types";
@@ -33,9 +34,10 @@ function daysInMonth(year: number, month: number): Date[] {
 function CalendarContent() {
   const { coffees, loading } = useCoffees();
   const overrides = useProfileOverrides();
-  const now = today();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
+  const now = useToday();
+  const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
+  const year = (selectedMonth ?? now).getFullYear();
+  const month = (selectedMonth ?? now).getMonth();
 
   const days = useMemo(() => daysInMonth(year, month), [year, month]);
 
@@ -57,9 +59,7 @@ function CalendarContent() {
   );
 
   function goToMonth(delta: number) {
-    const d = new Date(year, month + delta, 1);
-    setYear(d.getFullYear());
-    setMonth(d.getMonth());
+    setSelectedMonth(new Date(year, month + delta, 1));
   }
 
   return (

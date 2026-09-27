@@ -143,9 +143,9 @@ describe("rankForDate (date search)", () => {
 
   const coffees: TestCoffee[] = [
     { name: "Washed Light - just right", roastDate: "2026-09-15", process: "washed", roastLevel: "light" },
-    { name: "Natural Light - drinkable", roastDate: "2026-09-17", process: "natural", roastLevel: "light" },
+    { name: "Natural Light - drinkable", roastDate: "2026-09-15", process: "natural", roastLevel: "light" },
     { name: "Anaerobic - too fresh", roastDate: "2026-09-21", process: "anaerobic", roastLevel: "light" },
-    { name: "Washed Medium - out of peak", roastDate: "2026-08-05", process: "washed", roastLevel: "medium" },
+    { name: "Washed Medium - out of peak", roastDate: "2026-09-05", process: "washed", roastLevel: "medium" },
   ];
 
   const targetDate = parseDateOnly("2026-09-25");
@@ -157,12 +157,7 @@ describe("rankForDate (date search)", () => {
   );
 
   it("ranks peak/drinkable ahead of not_ready and too_old/out_of_peak", () => {
-    const statuses = ranked.map((r) => r.status);
-    const peakIndex = statuses.indexOf("peak");
-    const notReadyIndex = statuses.indexOf("not_ready");
-    if (peakIndex !== -1 && notReadyIndex !== -1) {
-      expect(peakIndex).toBeLessThan(notReadyIndex);
-    }
+    expect(ranked.map((r) => r.status)).toEqual(["peak", "drinkable", "out_of_peak", "not_ready"]);
   });
 
   it("marks the freshly-roasted anaerobic coffee as not_ready", () => {

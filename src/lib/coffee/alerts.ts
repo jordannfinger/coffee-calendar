@@ -9,7 +9,7 @@ export interface PeakAlert<T> {
 }
 
 /**
- * Coffees whose peak window starts or ends tomorrow, relative to `onDate`.
+ * Coffees entering or leaving peak tomorrow, relative to `onDate`.
  * This is the in-app equivalent of a "your coffee enters peak tomorrow"
  * notification — there's no email/push infrastructure wired up yet (see
  * README), so this surfaces the same signal directly in the UI instead.
@@ -21,7 +21,7 @@ export function getPeakAlerts<T>(items: Array<{ item: T; window: CoffeeWindow }>
   for (const { item, window } of items) {
     if (differenceInCalendarDays(window.peakFrom, tomorrow) === 0) {
       alerts.push({ item, type: "entering_peak_tomorrow" });
-    } else if (differenceInCalendarDays(window.peakUntil, tomorrow) === 0) {
+    } else if (differenceInCalendarDays(addCalendarDays(window.peakUntil, 1), tomorrow) === 0) {
       alerts.push({ item, type: "leaving_peak_tomorrow" });
     }
   }

@@ -7,7 +7,8 @@ import { useCoffees } from "@/lib/coffee/useCoffees";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
 import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { calculateCoffeeWindow, getCoffeeStatus, STATUS_META, STATUS_ORDER } from "@/lib/coffee/engine";
-import { parseDateOnly, today } from "@/lib/coffee/dateUtils";
+import { parseDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { CoffeeCard } from "@/components/coffee/CoffeeCard";
 import { exportCoffeesAsCsv, exportCoffeesAsJson } from "@/lib/coffee/exportCoffees";
@@ -21,6 +22,7 @@ type SortKey = "status" | "roast_date_desc" | "roast_date_asc" | "name";
 function MyCoffeeContent() {
   const { coffees, loading, error } = useCoffees();
   const overrides = useProfileOverrides();
+  const now = useToday();
 
   const [statusFilter, setStatusFilter] = useState<CoffeeStatus | "all">("all");
   const [processFilter, setProcessFilter] = useState<string>("all");
@@ -30,7 +32,6 @@ function MyCoffeeContent() {
   const roasters = useMemo(() => Array.from(new Set(coffees.map((c) => c.roaster))).sort(), [coffees]);
 
   const rows = useMemo(() => {
-    const now = today();
     return coffees.map((coffee) => {
       const overrideProfile = resolveOverride(overrides, coffee.process, coffee.process_subtype, coffee.roast_level);
       const window = calculateCoffeeWindow({
@@ -42,7 +43,7 @@ function MyCoffeeContent() {
       });
       return { coffee, status: getCoffeeStatus(window, now) };
     });
-  }, [coffees, overrides]);
+  }, [coffees, overrides, now]);
 
   const visible = useMemo(() => {
     let filtered = rows;

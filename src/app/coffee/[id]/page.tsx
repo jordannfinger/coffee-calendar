@@ -7,7 +7,8 @@ import { AuthGate } from "@/components/auth/AuthGate";
 import { createClient } from "@/lib/supabase/client";
 import type { CoffeeRow } from "@/lib/coffee/coffeeTypes";
 import { calculateCoffeeWindow, getCoffeeStatus } from "@/lib/coffee/engine";
-import { parseDateOnly, today } from "@/lib/coffee/dateUtils";
+import { parseDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
 import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { PROCESS_OFFSETS, ROAST_LEVEL_BASELINE } from "@/lib/coffee/model";
@@ -36,6 +37,7 @@ function CoffeeDetailContent({ id }: { id: string }) {
   const [notFound, setNotFound] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const overrides = useProfileOverrides();
+  const now = useToday();
 
   useEffect(() => {
     let cancelled = false;
@@ -87,7 +89,7 @@ function CoffeeDetailContent({ id }: { id: string }) {
     roastLevel: coffee.roast_level,
     overrideProfile,
   });
-  const status = getCoffeeStatus(coffeeWindow, today());
+  const status = getCoffeeStatus(coffeeWindow, now);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">

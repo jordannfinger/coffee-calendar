@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { calculateCoffeeWindow, getCoffeeStatus } from "@/lib/coffee/engine";
-import { formatDateOnly, parseDateOnly, today } from "@/lib/coffee/dateUtils";
+import { formatDateOnly, parseDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS, subtypesFor } from "@/lib/coffee/options";
 import type { Process, RoastLevel } from "@/lib/coffee/types";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
@@ -14,7 +15,9 @@ import { Field, baseInputClasses } from "@/components/ui/Field";
 import { Card } from "@/components/ui/Card";
 
 export function CoffeeCalculator() {
-  const [roastDateStr, setRoastDateStr] = useState(formatDateOnly(today()));
+  const now = useToday();
+  const [selectedDate, setRoastDateStr] = useState<string | null>(null);
+  const roastDateStr = selectedDate ?? formatDateOnly(now);
   const [process, setProcess] = useState<Process>("washed");
   const [roastLevel, setRoastLevel] = useState<RoastLevel>("light");
   const [subtype, setSubtype] = useState<string>("");
@@ -22,11 +25,11 @@ export function CoffeeCalculator() {
   const overrides = useProfileOverrides();
   const subtypeOptions = subtypesFor(process);
 
-  const roastDate = parseDateOnly(roastDateStr || formatDateOnly(today()));
+  const roastDate = parseDateOnly(roastDateStr || formatDateOnly(now));
   const overrideProfile = resolveOverride(overrides, process, subtype || null, roastLevel);
   const window = calculateCoffeeWindow({ roastDate, process, processSubtype: subtype || null, roastLevel, overrideProfile });
 
-  const status = getCoffeeStatus(window, today());
+  const status = getCoffeeStatus(window, now);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr]">
@@ -38,7 +41,7 @@ export function CoffeeCalculator() {
             className={baseInputClasses}
             value={roastDateStr}
             onChange={(e) => setRoastDateStr(e.target.value)}
-            max={formatDateOnly(today())}
+            max={formatDateOnly(now)}
           />
         </Field>
 

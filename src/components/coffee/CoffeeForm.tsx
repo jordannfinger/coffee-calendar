@@ -4,7 +4,8 @@ import { useState, type FormEvent } from "react";
 import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS, subtypesFor } from "@/lib/coffee/options";
 import type { CoffeeFormValues } from "@/lib/coffee/coffeeTypes";
 import type { Process, RoastLevel } from "@/lib/coffee/types";
-import { formatDateOnly, today } from "@/lib/coffee/dateUtils";
+import { formatDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { Field, baseInputClasses } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 
@@ -18,6 +19,7 @@ export function CoffeeForm({
   submitLabel: string;
 }) {
   const [values, setValues] = useState(initialValues);
+  const now = useToday();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,7 +78,7 @@ export function CoffeeForm({
               id="f-roast-date"
               type="date"
               required
-              max={formatDateOnly(today())}
+              max={formatDateOnly(now)}
               className={baseInputClasses}
               value={values.roastDate}
               onChange={(e) => set("roastDate", e.target.value)}

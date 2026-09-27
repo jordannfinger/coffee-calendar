@@ -6,7 +6,8 @@ import { useCoffees } from "@/lib/coffee/useCoffees";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
 import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { rankForDate, reverseCalculate } from "@/lib/coffee/engine";
-import { formatDateOnly, formatLong, parseDateOnly, today } from "@/lib/coffee/dateUtils";
+import { formatDateOnly, formatLong, parseDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS } from "@/lib/coffee/options";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
@@ -14,23 +15,25 @@ import { statusLine } from "@/components/coffee/CoffeeCard";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { Card } from "@/components/ui/Card";
 import { Field, baseInputClasses } from "@/components/ui/Field";
-import type { CoffeeRow } from "@/lib/coffee/coffeeTypes";
+import { hasCoffeeRemaining, type CoffeeRow } from "@/lib/coffee/coffeeTypes";
 import type { Process, RoastLevel } from "@/lib/coffee/types";
 
 export default function SearchPage() {
   const { coffees } = useCoffees();
   const overrides = useProfileOverrides();
 
-  const [dateStr, setDateStr] = useState(formatDateOnly(today()));
+  const now = useToday();
+  const [selectedDate, setDateStr] = useState<string | null>(null);
+  const dateStr = selectedDate ?? formatDateOnly(now);
   const [peakOnly, setPeakOnly] = useState(false);
   const [processFilter, setProcessFilter] = useState<Process | "all">("all");
   const [guidanceRoastLevel, setGuidanceRoastLevel] = useState<RoastLevel>("light");
 
-  const targetDate = useMemo(() => parseDateOnly(dateStr || formatDateOnly(today())), [dateStr]);
+  const targetDate = useMemo(() => parseDateOnly(dateStr || formatDateOnly(now)), [dateStr, now]);
 
   const rankedCoffees = useMemo(() => {
     let results = rankForDate(
-      coffees,
+      coffees.filter(hasCoffeeRemaining),
       (c: CoffeeRow) => ({
         roastDate: parseDateOnly(c.roast_date),
         process: c.process,

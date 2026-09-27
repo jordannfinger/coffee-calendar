@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { CoffeeRow } from "@/lib/coffee/coffeeTypes";
 import { calculateCoffeeWindow, getCoffeeStatus, peakProgress } from "@/lib/coffee/engine";
-import { differenceInCalendarDays, formatShort, parseDateOnly, today } from "@/lib/coffee/dateUtils";
+import { addCalendarDays, differenceInCalendarDays, formatShort, parseDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import type { ProfileOverrideIndex } from "@/lib/coffee/profileOverrides";
@@ -27,12 +28,13 @@ export function statusLine(coffee: ReturnType<typeof calculateCoffeeWindow>, onD
     return "In peak";
   }
   if (status === "out_of_peak") {
-    return `Out of peak since ${formatShort(coffee.peakUntil)}`;
+    return `Out of peak since ${formatShort(addCalendarDays(coffee.peakUntil, 1))}`;
   }
   return "Well past its best";
 }
 
 export function CoffeeCard({ coffee, overrides }: { coffee: CoffeeRow; overrides?: ProfileOverrideIndex }) {
+  const now = useToday();
   const roastDate = parseDateOnly(coffee.roast_date);
   const overrideProfile = resolveOverride(overrides, coffee.process, coffee.process_subtype, coffee.roast_level);
   const window = calculateCoffeeWindow({
@@ -42,8 +44,8 @@ export function CoffeeCard({ coffee, overrides }: { coffee: CoffeeRow; overrides
     roastLevel: coffee.roast_level,
     overrideProfile,
   });
-  const status = getCoffeeStatus(window, today());
-  const daysSinceRoast = differenceInCalendarDays(roastDate, today());
+  const status = getCoffeeStatus(window, now);
+  const daysSinceRoast = differenceInCalendarDays(roastDate, now);
 
   return (
     <Link href={`/coffee/${coffee.id}`} className="block">
@@ -64,7 +66,7 @@ export function CoffeeCard({ coffee, overrides }: { coffee: CoffeeRow; overrides
           <span className="text-foreground-muted">
             Peak {formatShort(window.peakFrom)} – {formatShort(window.peakUntil)}
           </span>
-          <span className="font-medium text-foreground">{statusLine(window, today())}</span>
+          <span className="font-medium text-foreground">{statusLine(window, now)}</span>
         </div>
       </Card>
     </Link>

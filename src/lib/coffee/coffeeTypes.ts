@@ -4,6 +4,11 @@ import type { Process, RoastLevel } from "./types";
 export type CoffeeRow = Tables<"coffees">;
 export type CoffeeInsert = TablesInsert<"coffees">;
 
+/** Unknown quantities remain eligible; a finished bag stays in history only. */
+export function hasCoffeeRemaining(coffee: Pick<CoffeeRow, "remaining_percent">): boolean {
+  return coffee.remaining_percent !== 0;
+}
+
 /** Form-friendly shape: every optional field is a string (possibly empty) for controlled inputs. */
 export interface CoffeeFormValues {
   name: string;

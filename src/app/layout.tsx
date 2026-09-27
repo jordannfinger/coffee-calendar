@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
+import { TodayProvider } from "@/lib/coffee/useToday";
+import { formatDateOnly, today } from "@/lib/coffee/dateUtils";
 import "./globals.css";
 
 const bodyFont = Inter({
@@ -26,9 +28,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <Nav />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <TodayProvider initialDay={formatDateOnly(today())}>
+          <Nav />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </TodayProvider>
       </body>
     </html>
   );

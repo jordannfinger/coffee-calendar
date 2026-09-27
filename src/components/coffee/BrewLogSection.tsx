@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useBrewLogs, type BrewLogRow } from "@/lib/coffee/useBrewLogs";
 import { formatLong, parseDateOnly, today, formatDateOnly } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, baseInputClasses } from "@/components/ui/Field";
@@ -47,6 +48,7 @@ function BrewLogItem({ log }: { log: BrewLogRow }) {
 }
 
 export function BrewLogSection({ coffeeId }: { coffeeId: string }) {
+  const now = useToday();
   const { logs, loading, refresh } = useBrewLogs(coffeeId);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm());
@@ -109,7 +111,7 @@ export function BrewLogSection({ coffeeId }: { coffeeId: string }) {
         <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-surface-muted p-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label="Date" htmlFor="bl-date">
-              <input id="bl-date" type="date" className={baseInputClasses} value={form.brewedAt} onChange={(e) => set("brewedAt", e.target.value)} max={formatDateOnly(today())} />
+              <input id="bl-date" type="date" className={baseInputClasses} value={form.brewedAt} onChange={(e) => set("brewedAt", e.target.value)} max={formatDateOnly(now)} />
             </Field>
             <Field label="Brew method" htmlFor="bl-method">
               <input id="bl-method" className={baseInputClasses} value={form.brewMethod} onChange={(e) => set("brewMethod", e.target.value)} placeholder="V60" />

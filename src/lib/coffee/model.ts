@@ -250,16 +250,15 @@ export function computeProfile(process: Process, roastLevel: RoastLevel): Develo
   const offset = PROCESS_OFFSETS[process];
 
   const minRestDays = Math.max(1, baseline.minRestDays + offset.minRestDays);
-  const peakStartDays = Math.max(minRestDays, baseline.peakStartDays + offset.peakStartDays);
+  const peakStartDays = Math.max(minRestDays + 1, baseline.peakStartDays + offset.peakStartDays);
   const peakEndDays = Math.max(peakStartDays + 3, baseline.peakEndDays + offset.peakEndDays);
   const drinkableEndDays = Math.max(peakEndDays + 5, baseline.drinkableEndDays + offset.drinkableEndDays);
   const tooOldDays = Math.max(drinkableEndDays + 7, baseline.tooOldDays + offset.tooOldDays);
 
-  // Medium-Dark washed is documented with somewhat less filter-specific
-  // guidance than lighter roasts; every other roast level defers entirely to
-  // the process's own confidence rating (see research doc §5, "Confidence
-  // assignment logic").
-  const roastConfidence: Confidence = roastLevel === "medium_dark" && process === "washed" ? "medium" : "high";
+  // Research §5: lighter wet-hulled pairings have especially sparse evidence.
+  let roastConfidence: Confidence = "high";
+  if (roastLevel === "medium_dark" && process === "washed") roastConfidence = "medium";
+  if (process === "wet_hulled" && (roastLevel === "light" || roastLevel === "light_medium")) roastConfidence = "low";
 
   return {
     minRestDays,

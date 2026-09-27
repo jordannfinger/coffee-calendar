@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getPeakAlerts } from "./alerts";
-import { calculateCoffeeWindow } from "./engine";
+import { calculateCoffeeWindow, getCoffeeStatus } from "./engine";
 import { parseDateOnly } from "./dateUtils";
 
 describe("getPeakAlerts", () => {
@@ -14,9 +14,12 @@ describe("getPeakAlerts", () => {
   });
 
   it("flags a coffee leaving peak tomorrow", () => {
-    // washed/light: peakEnd 21 -> roasted 2026-08-13 puts peakUntil on 2026-09-03 (tomorrow)
+    // The final peak day is Sep 3; the first day outside peak is Sep 4.
     const window = calculateCoffeeWindow({ roastDate: parseDateOnly("2026-08-13"), process: "washed", roastLevel: "light" });
-    const alerts = getPeakAlerts([{ item: "coffee-b", window }], today);
+    expect(getPeakAlerts([{ item: "coffee-b", window }], today)).toEqual([]);
+    expect(getCoffeeStatus(window, parseDateOnly("2026-09-03"))).toBe("peak");
+    expect(getCoffeeStatus(window, parseDateOnly("2026-09-04"))).toBe("out_of_peak");
+    const alerts = getPeakAlerts([{ item: "coffee-b", window }], parseDateOnly("2026-09-03"));
     expect(alerts).toEqual([{ item: "coffee-b", type: "leaving_peak_tomorrow" }]);
   });
 

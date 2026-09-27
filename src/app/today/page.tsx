@@ -8,13 +8,14 @@ import { resolveOverride } from "@/lib/coffee/profileOverrides";
 import { rankForDate } from "@/lib/coffee/engine";
 import { getPeakAlerts } from "@/lib/coffee/alerts";
 import { statusLine } from "@/components/coffee/CoffeeCard";
-import { today, parseDateOnly, formatWithWeekday } from "@/lib/coffee/dateUtils";
+import { parseDateOnly, formatWithWeekday } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { Card } from "@/components/ui/Card";
 import { buttonClasses } from "@/components/ui/Button";
-import type { CoffeeRow } from "@/lib/coffee/coffeeTypes";
+import { hasCoffeeRemaining, type CoffeeRow } from "@/lib/coffee/coffeeTypes";
 
 const RANK_HEADLINE: Record<number, string> = {
   0: "Best right now",
@@ -24,10 +25,10 @@ const RANK_HEADLINE: Record<number, string> = {
 function TodayContent() {
   const { coffees, loading } = useCoffees();
   const overrides = useProfileOverrides();
-  const targetDate = today();
+  const targetDate = useToday();
 
   const ranked = rankForDate(
-    coffees,
+    coffees.filter(hasCoffeeRemaining),
     (c: CoffeeRow) => ({
       roastDate: parseDateOnly(c.roast_date),
       process: c.process,
@@ -73,6 +74,10 @@ function TodayContent() {
             + Add a coffee
           </Link>
         </Card>
+      )}
+
+      {!loading && coffees.length > 0 && ranked.length === 0 && (
+        <p className="mt-8 text-sm text-foreground-muted">All your bags are finished. Your history is still in My Coffee.</p>
       )}
 
       <ul className="mt-8 flex flex-col gap-4">

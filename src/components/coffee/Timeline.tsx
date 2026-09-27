@@ -1,6 +1,6 @@
 import type { CoffeeWindow } from "@/lib/coffee/types";
-import { differenceInCalendarDays, formatLong, today } from "@/lib/coffee/dateUtils";
-import { getCoffeeStatus } from "@/lib/coffee/engine";
+import { differenceInCalendarDays, formatLong } from "@/lib/coffee/dateUtils";
+import { useToday } from "@/lib/coffee/useToday";
 import clsx from "clsx";
 
 interface Segment {
@@ -35,7 +35,7 @@ export function Timeline({ window: coffeeWindow, className }: { window: CoffeeWi
     {
       key: "peak",
       label: "Peak",
-      days: Math.max(differenceInCalendarDays(peakFrom, peakUntil), 0),
+      days: Math.max(differenceInCalendarDays(peakFrom, peakUntil) + 1, 0),
       className: "bg-status-peak-bg",
     },
     {
@@ -47,11 +47,11 @@ export function Timeline({ window: coffeeWindow, className }: { window: CoffeeWi
   ];
 
   const totalDays = segments.reduce((sum, s) => sum + s.days, 0) || 1;
-  const now = today();
-  const status = getCoffeeStatus(coffeeWindow, now);
-  const showTodayMarker = status !== "too_old" && differenceInCalendarDays(roastDate, now) >= 0;
-  const todayOffsetDays = Math.min(Math.max(differenceInCalendarDays(roastDate, now), 0), totalDays);
-  const todayPercent = (todayOffsetDays / totalDays) * 100;
+  const now = useToday();
+  const todayOffsetDays = differenceInCalendarDays(roastDate, now);
+  const showTodayMarker = todayOffsetDays >= 0 && differenceInCalendarDays(now, drinkableUntil) >= 0;
+  // Each calendar day occupies one cell; put its marker in that cell's center.
+  const todayPercent = ((todayOffsetDays + 0.5) / totalDays) * 100;
 
   return (
     <div className={clsx("w-full", className)}>
