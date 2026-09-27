@@ -47,13 +47,15 @@ export function CoffeeForm({
   }
 
   const subtypeOptions = subtypesFor(values.process);
+  const fieldError = (name: string) => error?.startsWith(`${name} `) ? error : undefined;
+  const hasFieldError = ["Coffee name", "Roaster", "Origin", "Roast date", "Date ordered", "Elevation", "Harvest year", "Dose", "Water", "Rating", "Bag size", "Remaining percentage", "Bag opened date"].some((name) => fieldError(name));
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-8">
       <fieldset disabled={loading} className="flex flex-col gap-4">
         <legend className="mb-1 font-display text-lg font-semibold">The basics</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Coffee name" htmlFor="f-name">
+          <Field label="Coffee name" htmlFor="f-name" error={fieldError("Coffee name")}>
             <input
               id="f-name"
               required
@@ -63,7 +65,7 @@ export function CoffeeForm({
               placeholder="Ethiopia Guji"
             />
           </Field>
-          <Field label="Roaster" htmlFor="f-roaster">
+          <Field label="Roaster" htmlFor="f-roaster" error={fieldError("Roaster")}>
             <input
               id="f-roaster"
               required
@@ -73,7 +75,7 @@ export function CoffeeForm({
               placeholder="Sample Roasters"
             />
           </Field>
-          <Field label="Origin" htmlFor="f-origin">
+          <Field label="Origin" htmlFor="f-origin" error={fieldError("Origin")}>
             <input
               id="f-origin"
               required
@@ -83,7 +85,7 @@ export function CoffeeForm({
               placeholder="Ethiopia"
             />
           </Field>
-          <Field label="Roast date" htmlFor="f-roast-date">
+          <Field label="Roast date" htmlFor="f-roast-date" error={fieldError("Roast date")}>
             <input
               id="f-roast-date"
               type="date"
@@ -132,7 +134,7 @@ export function CoffeeForm({
               ))}
             </select>
           </Field>
-          <Field label="Date ordered" htmlFor="f-order-date" hint="Optional — doesn't affect the estimate.">
+          <Field label="Date ordered" htmlFor="f-order-date" hint="Optional — doesn't affect the estimate." error={fieldError("Date ordered")}>
             <input id="f-order-date" type="date" className={baseInputClasses} value={values.orderDate} onChange={(e) => set("orderDate", e.target.value)} />
           </Field>
         </div>
@@ -150,13 +152,13 @@ export function CoffeeForm({
           <Field label="Region" htmlFor="f-region">
             <input id="f-region" className={baseInputClasses} value={values.region} onChange={(e) => set("region", e.target.value)} placeholder="Guji" />
           </Field>
-          <Field label="Elevation (m)" htmlFor="f-elevation">
+          <Field label="Elevation (m)" htmlFor="f-elevation" error={fieldError("Elevation")}>
             <input id="f-elevation" type="number" min={0} max={2147483647} step={1} inputMode="numeric" className={baseInputClasses} value={values.elevationM} onChange={(e) => set("elevationM", e.target.value)} />
           </Field>
           <Field label="Lot" htmlFor="f-lot">
             <input id="f-lot" className={baseInputClasses} value={values.lot} onChange={(e) => set("lot", e.target.value)} />
           </Field>
-          <Field label="Harvest year" htmlFor="f-harvest-year">
+          <Field label="Harvest year" htmlFor="f-harvest-year" error={fieldError("Harvest year")}>
             <input id="f-harvest-year" type="number" min={1} max={9999} step={1} inputMode="numeric" className={baseInputClasses} value={values.harvestYear} onChange={(e) => set("harvestYear", e.target.value)} />
           </Field>
         </div>
@@ -174,10 +176,10 @@ export function CoffeeForm({
           <Field label="Grind setting" htmlFor="f-grind-setting">
             <input id="f-grind-setting" className={baseInputClasses} value={values.grindSetting} onChange={(e) => set("grindSetting", e.target.value)} />
           </Field>
-          <Field label="Dose (g)" htmlFor="f-dose">
+          <Field label="Dose (g)" htmlFor="f-dose" error={fieldError("Dose")}>
             <input id="f-dose" type="number" min={0.1} max={9999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={values.doseG} onChange={(e) => set("doseG", e.target.value)} />
           </Field>
-          <Field label="Water (g)" htmlFor="f-water">
+          <Field label="Water (g)" htmlFor="f-water" error={fieldError("Water")}>
             <input id="f-water" type="number" min={0.1} max={99999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={values.waterG} onChange={(e) => set("waterG", e.target.value)} />
           </Field>
         </div>
@@ -189,13 +191,13 @@ export function CoffeeForm({
       <fieldset disabled={loading} className="flex flex-col gap-4">
         <legend className="mb-1 font-display text-lg font-semibold">Personal (optional)</legend>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Rating (1–5)" htmlFor="f-rating">
+          <Field label="Rating (1–5)" htmlFor="f-rating" error={fieldError("Rating")}>
             <input id="f-rating" type="number" min={1} max={5} className={baseInputClasses} value={values.rating} onChange={(e) => set("rating", e.target.value)} />
           </Field>
-          <Field label="Bag size (g)" htmlFor="f-bag-size">
+          <Field label="Bag size (g)" htmlFor="f-bag-size" error={fieldError("Bag size")}>
             <input id="f-bag-size" type="number" min={0.1} max={99999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={values.bagSizeG} onChange={(e) => set("bagSizeG", e.target.value)} />
           </Field>
-          <Field label="Remaining (%)" htmlFor="f-remaining">
+          <Field label="Remaining (%)" htmlFor="f-remaining" error={fieldError("Remaining percentage")}>
             <input id="f-remaining" type="number" min={0} max={100} className={baseInputClasses} value={values.remainingPercent} onChange={(e) => set("remainingPercent", e.target.value)} />
           </Field>
         </div>
@@ -226,13 +228,13 @@ export function CoffeeForm({
               <option value="Fellow Atmos / valve canister" />
             </datalist>
           </Field>
-          <Field label="Bag opened date" htmlFor="f-bag-opened">
+          <Field label="Bag opened date" htmlFor="f-bag-opened" error={fieldError("Bag opened date")}>
             <input id="f-bag-opened" type="date" className={baseInputClasses} value={values.bagOpenedDate} onChange={(e) => set("bagOpenedDate", e.target.value)} />
           </Field>
         </div>
       </fieldset>
 
-      {error && (
+      {error && !hasFieldError && (
         <p role="alert" className="text-sm font-medium text-status-not-ready-text">
           {error}
         </p>

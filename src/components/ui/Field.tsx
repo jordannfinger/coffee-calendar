@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 
 export function Field({
   label,
@@ -13,15 +13,24 @@ export function Field({
   error?: string;
   children: ReactNode;
 }) {
+  const descriptionId = error ? `${htmlFor}-error` : hint ? `${htmlFor}-hint` : undefined;
+  const describedChildren = Children.map(children, (child) => {
+    if (!isValidElement<{ id?: string; "aria-describedby"?: string; "aria-invalid"?: boolean }>(child) || child.props.id !== htmlFor) return child;
+    return cloneElement(child, {
+      "aria-describedby": [child.props["aria-describedby"], descriptionId].filter(Boolean).join(" ") || undefined,
+      "aria-invalid": error ? true : child.props["aria-invalid"],
+    });
+  });
+
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
         {label}
       </label>
-      {children}
-      {hint && !error && <p className="text-xs text-foreground-muted">{hint}</p>}
+      {describedChildren}
+      {hint && !error && <p id={`${htmlFor}-hint`} className="text-xs text-foreground-muted">{hint}</p>}
       {error && (
-        <p role="alert" className="text-xs font-medium text-status-not-ready-text">
+        <p id={`${htmlFor}-error`} role="alert" className="text-xs font-medium text-status-not-ready-text">
           {error}
         </p>
       )}

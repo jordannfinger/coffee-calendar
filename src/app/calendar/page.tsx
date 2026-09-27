@@ -113,6 +113,7 @@ function CalendarContent() {
                   <th
                     key={day.toISOString()}
                     scope="col"
+                    aria-label={day.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                     className={clsx(
                       "w-7 border-b border-border px-0 py-2 text-center text-[10px] font-normal text-foreground-muted",
                       isSameDay(day, now) && "bg-brand-tint text-brand-strong",
@@ -140,10 +141,13 @@ function CalendarContent() {
                           <span
                             className={clsx("flex h-6 w-6 items-center justify-center rounded text-xs", STATUS_CELL_CLASSES[status])}
                             title={`${STATUS_META[status].label} on ${day.toLocaleDateString()}`}
+                            role="img"
+                            aria-label={`${coffee.name}: ${STATUS_META[status].label} on ${day.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
                           >
-                            {STATUS_META[status].emoji}
+                            <span aria-hidden="true">{STATUS_META[status].emoji}</span>
                           </span>
                         )}
+                        {!status && <span className="sr-only">Before roast on {day.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>}
                       </td>
                     );
                   })}

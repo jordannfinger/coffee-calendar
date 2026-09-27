@@ -58,6 +58,8 @@ export function BrewLogSection({ coffeeId }: { coffeeId: string }) {
   const pending = useRef(false);
   const draftId = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fieldError = (name: string) => error?.startsWith(`${name} `) ? error : undefined;
+  const hasFieldError = ["Brew date", "Dose", "Water", "Rating"].some((name) => fieldError(name));
 
   function set<K extends keyof ReturnType<typeof emptyForm>>(key: K, value: ReturnType<typeof emptyForm>[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -120,7 +122,7 @@ export function BrewLogSection({ coffeeId }: { coffeeId: string }) {
         <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-surface-muted p-4">
           <fieldset disabled={saving} className="contents">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Date" htmlFor="bl-date">
+            <Field label="Date" htmlFor="bl-date" error={fieldError("Brew date")}>
               <input id="bl-date" type="date" required className={baseInputClasses} value={form.brewedAt} onChange={(e) => set("brewedAt", e.target.value)} max={formatDateOnly(now)} />
             </Field>
             <Field label="Brew method" htmlFor="bl-method">
@@ -129,10 +131,10 @@ export function BrewLogSection({ coffeeId }: { coffeeId: string }) {
             <Field label="Grind setting" htmlFor="bl-grind">
               <input id="bl-grind" className={baseInputClasses} value={form.grindSetting} onChange={(e) => set("grindSetting", e.target.value)} placeholder="7.0" />
             </Field>
-            <Field label="Dose (g)" htmlFor="bl-dose">
+            <Field label="Dose (g)" htmlFor="bl-dose" error={fieldError("Dose")}>
               <input id="bl-dose" type="number" min={0.1} max={9999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={form.doseG} onChange={(e) => set("doseG", e.target.value)} />
             </Field>
-            <Field label="Water (g)" htmlFor="bl-water">
+            <Field label="Water (g)" htmlFor="bl-water" error={fieldError("Water")}>
               <input id="bl-water" type="number" min={0.1} max={99999.9} inputMode="decimal" step="0.1" className={baseInputClasses} value={form.waterG} onChange={(e) => set("waterG", e.target.value)} />
             </Field>
             <Field label="Drawdown" htmlFor="bl-drawdown">
@@ -143,7 +145,7 @@ export function BrewLogSection({ coffeeId }: { coffeeId: string }) {
             <input id="bl-tasting" className={baseInputClasses} value={form.tastingNotes} onChange={(e) => set("tastingNotes", e.target.value)} />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Rating (1–5)" htmlFor="bl-rating">
+            <Field label="Rating (1–5)" htmlFor="bl-rating" error={fieldError("Rating")}>
               <input id="bl-rating" type="number" min={1} max={5} className={baseInputClasses} value={form.rating} onChange={(e) => set("rating", e.target.value)} />
             </Field>
             <label className="flex items-center gap-2 pt-6 text-sm font-medium">
@@ -155,7 +157,7 @@ export function BrewLogSection({ coffeeId }: { coffeeId: string }) {
             <textarea id="bl-notes" rows={2} className={baseInputClasses} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
           </Field>
           </fieldset>
-          {error && (
+          {error && !hasFieldError && (
             <p role="alert" className="text-sm font-medium text-status-not-ready-text">
               {error}
             </p>

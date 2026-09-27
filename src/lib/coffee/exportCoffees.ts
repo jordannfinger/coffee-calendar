@@ -31,8 +31,12 @@ const EXPORT_COLUMNS: Array<{ key: keyof CoffeeRow; header: string }> = [
 
 function csvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
-  const str = String(value);
-  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  const text = String(value);
+  // Excel can re-activate single-quote-escaped formulas after save/reopen.
+  // A quoted leading tab keeps formula-like text literal in spreadsheet exports.
+  const formula = typeof value === "string" && /^[\s\x00-\x1f]*[=+\-@＝＋－＠]/u.test(text);
+  const literal = formula ? `\t${text}` : text;
+  return formula || /[",\r\n]/.test(literal) ? `"${literal.replace(/"/g, '""')}"` : literal;
 }
 
 export function coffeesToCsv(coffees: CoffeeRow[]): string {

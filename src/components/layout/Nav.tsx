@@ -63,7 +63,7 @@ export function Nav() {
               <Link href="/login" className="rounded-full px-4 py-2 text-sm font-medium text-foreground-muted hover:bg-surface-muted">
                 Log in
               </Link>
-              <Link href="/signup" className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong">
+              <Link href="/signup" className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-brand-strong">
                 Save my data
               </Link>
             </>
@@ -118,7 +118,7 @@ export function Nav() {
                 <Link
                   href="/signup"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg bg-brand px-3 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-strong"
+                  className="rounded-lg bg-brand px-3 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-brand-strong"
                 >
                   Save my data
                 </Link>
