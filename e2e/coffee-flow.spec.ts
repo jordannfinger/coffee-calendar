@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 const mockUrl = "http://127.0.0.1:45217";
 
@@ -37,7 +38,7 @@ test("a guest can claim an account without losing the saved coffee", async ({ pa
   await expect(guestReminder).toBeVisible();
   await expect(guestReminder.getByRole("link", { name: "Save my data" })).toBeVisible();
   const downloadPromise = page.waitForEvent("download");
-  await guestReminder.getByRole("button", { name: "Download JSON" }).click();
+  await guestReminder.getByRole("button", { name: "Download backup" }).click();
   expect((await downloadPromise).suggestedFilename()).toMatch(/\.json$/);
 
   await page.goto("/signup");
@@ -78,14 +79,56 @@ test("a guest can restore a JSON export without duplicating it on retry", async 
   };
   await page.goto("/coffee");
   const file = { name: "coffee-calendar-export.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify([exportRow])) };
-  await page.getByLabel("JSON export").setInputFiles(file);
+  await page.getByLabel("JSON backup or export").setInputFiles(file);
   await expect(page.getByText("Ready to add from coffee-calendar-export.json")).toBeVisible();
   expect((await (await request.get(`${mockUrl}/__state`)).json()).coffees).toHaveLength(0);
-  await page.getByRole("button", { name: "Import 1 coffee" }).click();
-  await expect(page.getByRole("status")).toContainText("1 coffee imported; 0 already present");
+  await page.getByRole("button", { name: "Import 1 coffee and 0 brews" }).click();
+  await expect(page.getByRole("status")).toContainText("1 coffee and 0 brews imported; 0 coffees and 0 brews already present");
   await expect(page.getByText("Restored Coffee")).toBeVisible();
-  await page.getByLabel("JSON export").setInputFiles(file);
-  await page.getByRole("button", { name: "Import 1 coffee" }).click();
-  await expect(page.getByRole("status")).toContainText("0 coffees imported; 1 already present");
+  await page.getByLabel("JSON backup or export").setInputFiles(file);
+  await page.getByRole("button", { name: "Import 1 coffee and 0 brews" }).click();
+  await expect(page.getByRole("status")).toContainText("0 coffees and 0 brews imported; 1 coffee and 0 brews already present");
   expect((await (await request.get(`${mockUrl}/__state`)).json()).coffees).toHaveLength(1);
+});
+
+test("a full backup restores brew history to its coffee and is safe to retry", async ({ page, request }) => {
+  const { userId } = await (await request.get(`${mockUrl}/__state`)).json();
+  const coffeeId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const brewId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  await request.post(`${mockUrl}/rest/v1/coffees`, { data: {
+    id: coffeeId, user_id: userId, name: "History Coffee", roaster: "Test Roaster", origin: "Kenya",
+    roast_date: "2026-09-01", process: "washed", roast_level: "light", remaining_percent: 50,
+  } });
+  await request.post(`${mockUrl}/rest/v1/brew_logs`, { data: {
+    id: brewId, coffee_id: coffeeId, user_id: userId, brewed_at: "2026-09-03",
+    brew_method: "V60", dose_g: 18, water_g: 300, notes: "Sweet cup", locked: true,
+  } });
+  await page.goto("/coffee");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download backup" }).first().click();
+  const backup = Buffer.from(await readFile(await (await download).path()));
+  const contents = JSON.parse(backup.toString());
+  expect(contents.version).toBe(2);
+  expect(contents.coffees).toHaveLength(1);
+  expect(contents.brew_logs).toHaveLength(1);
+  expect(contents.coffees[0]).not.toHaveProperty("share_token");
+
+  await request.post(`${mockUrl}/__reset`);
+  await page.goto("/coffee");
+  const file = { name: "coffee-calendar-backup.json", mimeType: "application/json", buffer: backup };
+  await page.getByLabel("JSON backup or export").setInputFiles(file);
+  await page.getByRole("button", { name: "Import 1 coffee and 1 brew" }).click();
+  await expect(page.getByRole("status")).toContainText("1 coffee and 1 brew imported");
+  const restored = await (await request.get(`${mockUrl}/__state`)).json();
+  expect(restored.coffees).toHaveLength(1);
+  expect(restored.brewLogs).toHaveLength(1);
+  expect(restored.brewLogs[0].coffee_id).toBe(restored.coffees[0].id);
+  expect(restored.brewLogs[0].notes).toBe("Sweet cup");
+
+  await page.getByLabel("JSON backup or export").setInputFiles(file);
+  await page.getByRole("button", { name: "Import 1 coffee and 1 brew" }).click();
+  await expect(page.getByRole("status")).toContainText("0 coffees and 0 brews imported");
+  const again = await (await request.get(`${mockUrl}/__state`)).json();
+  expect(again.coffees).toHaveLength(1);
+  expect(again.brewLogs).toHaveLength(1);
 });

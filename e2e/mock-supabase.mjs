@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 const userId = "00000000-0000-4000-8000-000000000001";
 const origin = "http://127.0.0.1:3100";
 let coffees = [];
+let brewLogs = [];
 let pendingEmail = null;
 let email = null;
 let anonymous = true;
@@ -64,6 +65,7 @@ createServer(async (req, res) => {
   if (url.pathname === "/health") return respond(res, 200, { ok: true });
   if (url.pathname === "/__reset" && req.method === "POST") {
     coffees = [];
+    brewLogs = [];
     pendingEmail = null;
     email = null;
     anonymous = true;
@@ -76,6 +78,7 @@ createServer(async (req, res) => {
       userId, email, anonymous, pendingEmail,
       verificationUrl: pendingEmail ? `${url.origin}/auth/v1/verify?token=mock-email-change-token&type=email_change` : null,
       coffees: coffees.map(({ id, name, user_id }) => ({ id, name, user_id })),
+      brewLogs: brewLogs.map(({ id, coffee_id, user_id, notes }) => ({ id, coffee_id, user_id, notes })),
     });
   }
   if (url.pathname === "/auth/v1/signup" && req.method === "POST") return respond(res, 200, session());
@@ -113,8 +116,25 @@ createServer(async (req, res) => {
     redirectTo = url.searchParams.get("redirect_to");
     return respond(res, 200, user());
   }
-  if (url.pathname === "/rest/v1/process_profiles" || url.pathname === "/rest/v1/brew_logs") {
+  if (url.pathname === "/rest/v1/process_profiles") {
     return respond(res, 200, []);
+  }
+  if (url.pathname === "/rest/v1/brew_logs" && req.method === "POST") {
+    const input = await readJson(req);
+    const incoming = Array.isArray(input) ? input : [input];
+    if (incoming.some((log) => brewLogs.some((existing) => existing.id === log.id) ||
+        !coffees.some((coffee) => coffee.id === log.coffee_id && coffee.user_id === log.user_id))) {
+      return respond(res, 409, { message: "duplicate brew ID or missing owned coffee" });
+    }
+    const rows = incoming.map((log) => ({ ...log, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }));
+    brewLogs = [...brewLogs, ...rows];
+    return respond(res, 201, Array.isArray(input) ? rows : { id: rows[0].id });
+  }
+  if (url.pathname === "/rest/v1/brew_logs" && req.method === "GET") {
+    const coffeeId = url.searchParams.get("coffee_id")?.replace(/^eq\./, "");
+    const userId = url.searchParams.get("user_id")?.replace(/^eq\./, "");
+    const rows = brewLogs.filter((log) => (!coffeeId || log.coffee_id === coffeeId) && (!userId || log.user_id === userId));
+    return respond(res, 200, rows, { "content-range": `0-${Math.max(rows.length - 1, 0)}/${rows.length}` });
   }
   if (url.pathname === "/rest/v1/coffees" && req.method === "POST") {
     const input = await readJson(req);

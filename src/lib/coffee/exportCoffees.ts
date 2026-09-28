@@ -1,4 +1,7 @@
 import type { CoffeeRow } from "./coffeeTypes";
+import type { BrewLogRow } from "./useBrewLogs";
+import { createClient } from "@/lib/supabase/client";
+import { fetchAllPages } from "./fetchAllPages";
 
 const EXPORT_COLUMNS: Array<{ key: keyof CoffeeRow; header: string }> = [
   { key: "name", header: "Name" },
@@ -62,6 +65,39 @@ export function exportCoffeesAsCsv(coffees: CoffeeRow[]) {
   downloadTextFile(`coffee-calendar-export-${new Date().toISOString().slice(0, 10)}.csv`, coffeesToCsv(coffees), "text/csv;charset=utf-8");
 }
 
-export function exportCoffeesAsJson(coffees: CoffeeRow[]) {
-  downloadTextFile(`coffee-calendar-export-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(coffees, null, 2), "application/json");
+export function fullBackupJson(coffees: CoffeeRow[], brewLogs: BrewLogRow[]): string {
+  return JSON.stringify({
+    format: "coffee-calendar-backup",
+    version: 2,
+    exported_at: new Date().toISOString(),
+    coffees: coffees.map(coffee => ({ ...coffee, share_token: undefined })),
+    brew_logs: brewLogs,
+  }, null, 2);
+}
+
+/** Fetch fresh, complete owner data before downloading, so stale UI state cannot truncate a backup. */
+export async function downloadFullBackup(userId: string): Promise<void> {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || user?.id !== userId) throw new Error("Couldn't verify your session. Please try again.");
+
+  const coffees = await fetchAllPages<CoffeeRow>(async (from, to) => {
+    const { data, count, error } = await supabase.from("coffees")
+      .select("*", { count: "exact" }).eq("user_id", userId).order("id").range(from, to);
+    return { data, count, error };
+  });
+  const brewLogs = await fetchAllPages<BrewLogRow>(async (from, to) => {
+    const { data, count, error } = await supabase.from("brew_logs")
+      .select("*", { count: "exact" }).eq("user_id", userId).order("id").range(from, to);
+    return { data, count, error };
+  });
+  const coffeeIds = new Set(coffees.map(coffee => coffee.id));
+  if (brewLogs.some(log => !coffeeIds.has(log.coffee_id))) {
+    throw new Error("The backup data changed while downloading. Please try again.");
+  }
+  const { data: { user: currentUser }, error: finalAuthError } = await supabase.auth.getUser();
+  if (finalAuthError || currentUser?.id !== userId) {
+    throw new Error("Your session changed while downloading. Please try again.");
+  }
+  downloadTextFile(`coffee-calendar-backup-${new Date().toISOString().slice(0, 10)}.json`, fullBackupJson(coffees, brewLogs), "application/json");
 }

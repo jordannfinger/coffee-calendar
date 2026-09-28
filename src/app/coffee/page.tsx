@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { useCoffees } from "@/lib/coffee/useCoffees";
@@ -12,7 +12,7 @@ import { useToday } from "@/lib/coffee/useToday";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { CoffeeCard } from "@/components/coffee/CoffeeCard";
 import { ImportCoffees } from "@/components/coffee/ImportCoffees";
-import { exportCoffeesAsCsv, exportCoffeesAsJson } from "@/lib/coffee/exportCoffees";
+import { downloadFullBackup, exportCoffeesAsCsv } from "@/lib/coffee/exportCoffees";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ResourceError } from "@/components/ui/ResourceError";
@@ -30,6 +30,24 @@ function MyCoffeeContent() {
   const [processFilter, setProcessFilter] = useState<string>("all");
   const [roasterFilter, setRoasterFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("status");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const exportPending = useRef(false);
+
+  async function handleBackupDownload() {
+    if (!userId || exportPending.current) return;
+    exportPending.current = true;
+    setExporting(true);
+    setExportError(null);
+    try {
+      await downloadFullBackup(userId);
+    } catch {
+      setExportError("Couldn't download a complete backup. Please try again.");
+    } finally {
+      exportPending.current = false;
+      setExporting(false);
+    }
+  }
 
   const roasters = useMemo(() => Array.from(new Set(coffees.map((c) => c.roaster))).sort(), [coffees]);
 
@@ -78,16 +96,18 @@ function MyCoffeeContent() {
               <Button variant="secondary" size="sm" onClick={() => exportCoffeesAsCsv(coffees)}>
                 Export CSV
               </Button>
-              <Button variant="secondary" size="sm" onClick={() => exportCoffeesAsJson(coffees)}>
-                Export JSON
-              </Button>
             </>
           )}
+          <Button variant="secondary" size="sm" disabled={!userId || exporting || loading || !!error} onClick={() => void handleBackupDownload()}>
+            {exporting ? "Preparing backup…" : "Download backup"}
+          </Button>
           <Link href="/coffee/new" className={buttonClasses("primary")}>
             + Add coffee
           </Link>
         </div>
       </div>
+
+      {exportError && <p role="alert" className="mb-4 text-sm text-status-not-ready-text">{exportError}</p>}
 
       {!loading && !error && isAnonymous && coffees.length > 0 && (
         <Card role="region" aria-labelledby="guest-data-heading" className="mb-6 flex flex-col gap-3 bg-brand-tint/50 sm:flex-row sm:items-center sm:justify-between">
@@ -95,12 +115,12 @@ function MyCoffeeContent() {
             <h2 id="guest-data-heading" className="font-display text-lg font-semibold">Keep your coffees if you change devices</h2>
             <p className="mt-1 text-sm text-foreground-muted">
               This guest session is tied to this browser. If you clear its site data, you cannot reopen these coffees. Save your data
-              with an account, or download a JSON copy to keep your own record.
+              with an account, or download a backup you can restore later.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <Link href="/signup" className={buttonClasses("primary")}>Save my data</Link>
-            <Button variant="secondary" onClick={() => exportCoffeesAsJson(coffees)}>Download JSON</Button>
+            <Button variant="secondary" disabled={exporting} onClick={() => void handleBackupDownload()}>{exporting ? "Preparing…" : "Download backup"}</Button>
           </div>
         </Card>
       )}
