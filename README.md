@@ -177,11 +177,17 @@ Open http://localhost:3000 — the app is immediately usable, no login. If you w
 ### Other scripts
 
 ```bash
-npm test        # run the date/engine unit tests
-npm run lint     # ESLint
-npm run typecheck  # tsc --noEmit
-npm run build    # production build
+npm test             # unit and database-policy tests
+npm run test:e2e     # local Chromium flows with a mock Supabase server
+npm run lint         # ESLint
+npm run typecheck    # generate Next route types, then check TypeScript
+npm run build        # production build
 ```
+
+GitHub Actions runs these checks for pull requests and pushes to `main`. The
+browser tests build the app with local mock credentials; they do not access the
+hosted database or send real email. Live email confirmation remains a separate
+acceptance check.
 
 ---
 
