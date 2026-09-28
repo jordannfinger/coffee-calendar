@@ -38,15 +38,49 @@ The hosted index migration and its verification were committed to `main` as
   test/doc paths were inspected separately. No confirmed material defect
   remains.
 
+## Live acceptance after deployment
+
+The production Vercel deployment of pagination commit `d6b5702` reported
+`READY`. With two isolated anonymous accounts on hosted Supabase, the first
+created a coffee and the second could not read its base-table row or attach a
+brew log to it. An unauthenticated client could not read the base row but could
+read the approved fields with its exact share token. Revoking the token made
+that RPC return no row. The probe coffee and both anonymous accounts were
+removed; hosted counts returned to one Auth user, seven coffees, and zero
+brew logs.
+
+In an installed Chrome browser against the production alias, a temporary
+shared coffee rendered on `/c/[shareToken]` without its private notes. After
+revocation, the same page rendered the inactive-link message. The browser
+reported no page errors. The temporary owner account and coffee were removed.
+
+A separate temporary browser account received 1,001 coffees through hosted
+REST. After reloading the deployed `/coffee` page, all 1,001 coffee cards,
+including the last row, rendered with no page errors. All test coffees and the
+temporary account were removed. Final hosted counts again matched the
+pre-test baseline: one Auth user, seven coffees, and zero brew logs.
+
+A temporary guest with one coffee submitted the deployed "Save my data" form
+to the provided test inbox. Supabase initially showed a pending email change;
+verification promoted that *same user ID* from anonymous to permanent while
+its coffee remained attached. The first callback redirected to login because
+the test browser holding its PKCE verifier had been closed before the link was
+opened. A fresh magic-link login, opened in the same persistent browser that
+requested it, successfully exchanged the code at `/auth/callback`, landed on
+`/today`, and showed the retained coffee on `/coffee` without page errors.
+The confirmed test account, its coffee, and the separate magic-link browser's
+guest account were deleted. Hosted counts again returned to baseline.
+
 ## Remaining operational acceptance
 
-The hosted project has one existing Auth user and no shared coffees or brew
-logs. Positive token lookup and two-owner isolation were checked inside
-rollback transactions, but the deployed public page, Auth account-claiming,
-email callbacks, and a real inventory beyond the API row cap have not been
-exercised with persistent test accounts. Those checks need isolated test
-identities and an email inbox or an existing account owner. The hosted RLS
-per-row `auth.uid()` performance warnings and the Auth
-leaked-password-protection warning remain;
-the former is low impact at the current row count and the latter is a project
-setting, not a code change.
+The *email-change callback in the original guest browser* was not directly
+verified: the first verifier was lost with the test browser, and Supabase
+rate-limited a second email-change attempt before sending. Its account
+promotion and data continuity were verified in hosted Auth/Postgres, and the
+same deployed callback succeeded for the magic-link flow. The rate-limited
+attempt's temporary user and coffee were deleted; final counts were one Auth
+user, seven coffees, and zero brew logs.
+
+The hosted RLS per-row `auth.uid()` performance warnings and the Auth
+leaked-password-protection warning remain. The former is low impact at the
+current row count; the latter is a project setting, not a code change.
