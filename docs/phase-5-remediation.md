@@ -71,7 +71,7 @@ requested it, successfully exchanged the code at `/auth/callback`, landed on
 The confirmed test account, its coffee, and the separate magic-link browser's
 guest account were deleted. Hosted counts again returned to baseline.
 
-## Remaining operational acceptance
+## Parked operational acceptance
 
 The *email-change callback in the original guest browser* was not directly
 verified: the first verifier was lost with the test browser, and Supabase
@@ -79,8 +79,13 @@ rate-limited a second email-change attempt before sending. Its account
 promotion and data continuity were verified in hosted Auth/Postgres, and the
 same deployed callback succeeded for the magic-link flow. The rate-limited
 attempt's temporary user and coffee were deleted; final counts were one Auth
-user, seven coffees, and zero brew logs.
+user, seven coffees, and zero brew logs. A further deployed-browser retry on
+2026-09-28 received Supabase's `429 over_email_send_rate_limit` before a link
+was sent. Its temporary accounts and coffees were removed, and counts again
+returned to baseline. The exact email-change callback check is deferred until
+email sending is available; no additional retry is needed for the other
+already-verified account and data-continuity behaviors.
 
-The hosted RLS per-row `auth.uid()` performance warnings and the Auth
-leaked-password-protection warning remain. The former is low impact at the
-current row count; the latter is a project setting, not a code change.
+The hosted RLS per-row `auth.uid()` performance warnings were handled in the
+[next follow-through](phase-6-remediation.md). The Auth
+leaked-password-protection warning remains a project setting follow-up.
