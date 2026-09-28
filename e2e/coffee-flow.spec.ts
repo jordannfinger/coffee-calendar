@@ -32,6 +32,14 @@ test("a guest can save a coffee and start claiming the same data", async ({ page
   await expect(page).toHaveURL(/\/coffee\/[0-9a-f-]{36}$/);
   await expect(page.getByText("CI Test Coffee")).toBeVisible();
 
+  await page.goto("/coffee");
+  const guestReminder = page.getByRole("region", { name: "Keep your coffees if you change devices" });
+  await expect(guestReminder).toBeVisible();
+  await expect(guestReminder.getByRole("link", { name: "Save my data" })).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await guestReminder.getByRole("button", { name: "Download JSON" }).click();
+  expect((await downloadPromise).suggestedFilename()).toMatch(/\.json$/);
+
   await page.goto("/signup");
   await page.getByLabel("Email").fill("coffee-test@example.com");
   await page.getByLabel("Password", { exact: true }).fill("A-strong-test-password-123");

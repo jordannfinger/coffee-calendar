@@ -21,7 +21,7 @@ import type { CoffeeStatus } from "@/lib/coffee/types";
 type SortKey = "status" | "roast_date_desc" | "roast_date_asc" | "name";
 
 function MyCoffeeContent() {
-  const { coffees, loading, error, refresh } = useCoffees();
+  const { coffees, isAnonymous, loading, error, refresh } = useCoffees();
   const overrides = useProfileOverrides();
   const now = useToday();
 
@@ -87,6 +87,22 @@ function MyCoffeeContent() {
           </Link>
         </div>
       </div>
+
+      {!loading && !error && isAnonymous && coffees.length > 0 && (
+        <Card role="region" aria-labelledby="guest-data-heading" className="mb-6 flex flex-col gap-3 bg-brand-tint/50 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 id="guest-data-heading" className="font-display text-lg font-semibold">Keep your coffees if you change devices</h2>
+            <p className="mt-1 text-sm text-foreground-muted">
+              This guest session is tied to this browser. If you clear its site data, you cannot reopen these coffees. Save your data
+              with an account, or download a JSON copy to keep your own record.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Link href="/signup" className={buttonClasses("primary")}>Save my data</Link>
+            <Button variant="secondary" onClick={() => exportCoffeesAsJson(coffees)}>Download JSON</Button>
+          </div>
+        </Card>
+      )}
 
       {loading && <p className="text-sm text-foreground-muted">Loading your coffees…</p>}
       {error && <ResourceError message={error} retry={refresh} />}
