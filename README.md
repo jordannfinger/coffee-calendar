@@ -195,6 +195,9 @@ npm run build    # production build
 
 No other infrastructure is required — Supabase is the only external dependency.
 
+For hosted data recovery on the Free plan, follow the encrypted off-site backup
+and restore procedure in [docs/backup-recovery.md](docs/backup-recovery.md).
+
 ---
 
 ## 8. Feature additions beyond the MVP
