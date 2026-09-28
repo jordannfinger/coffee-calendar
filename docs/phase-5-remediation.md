@@ -71,20 +71,24 @@ requested it, successfully exchanged the code at `/auth/callback`, landed on
 The confirmed test account, its coffee, and the separate magic-link browser's
 guest account were deleted. Hosted counts again returned to baseline.
 
-## Parked operational acceptance
+## Email-change callback acceptance
 
-The *email-change callback in the original guest browser* was not directly
-verified: the first verifier was lost with the test browser, and Supabase
-rate-limited a second email-change attempt before sending. Its account
-promotion and data continuity were verified in hosted Auth/Postgres, and the
-same deployed callback succeeded for the magic-link flow. The rate-limited
-attempt's temporary user and coffee were deleted; final counts were one Auth
-user, seven coffees, and zero brew logs. A further deployed-browser retry on
-2026-09-28 received Supabase's `429 over_email_send_rate_limit` before a link
-was sent. Its temporary accounts and coffees were removed, and counts again
-returned to baseline. The exact email-change callback check is deferred until
-email sending is available; no additional retry is needed for the other
-already-verified account and data-continuity behaviors.
+The first email-change callback could not be checked in the original guest
+browser because its PKCE verifier was lost when that browser was closed.
+Supabase then rate-limited two follow-up attempts; both test accounts were
+removed. Their separate account-promotion and data-continuity checks passed,
+as did a magic-link callback in a persistent browser.
+
+On 2026-09-29, the project was configured to send account email through the
+free Inkbox SMTP mailbox. A fresh guest saved one marked coffee, requested
+account claiming in the deployed browser, received the email-change link in
+Inkbox, and opened it in that same browser. The callback landed on `/today`
+without page errors. Hosted Auth showed the same user ID promoted from
+anonymous to permanent, and the marked coffee still belonged to that ID and
+rendered on `/coffee`. The test account and coffee were deleted; counts returned
+to one Auth user, seven coffees, and zero brew logs. This closes the original
+parked acceptance check. CI also covers the callback with a local mock; it
+does not send real mail.
 
 The hosted RLS per-row `auth.uid()` performance warnings were handled in the
 [next follow-through](phase-6-remediation.md). The Auth

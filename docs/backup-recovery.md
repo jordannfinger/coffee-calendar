@@ -55,7 +55,8 @@ for 18:30 Brisbane time each day. It repeats the temporary-login, encrypted
 dump, Drive upload, and readback checks and reports failed runs. It depends on
 this local computer and its connected Supabase and Google Drive tools being
 available; check its run history periodically. This is not a server-side backup
-service, and the first scheduled run has not yet been observed.
+service. An automation-triggered run has since completed the encrypted dump,
+Google Drive upload, matching SHA-256 readback, and archive verification.
 
 The local recovery key must be copied to a password manager or another secure
 location **separate from both this computer and the Drive backup folder**.

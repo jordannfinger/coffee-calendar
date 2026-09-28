@@ -35,9 +35,9 @@ and query plans later show a need for it.
 
 [Leaked password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
 is Pro-only, so its advisor warning cannot be resolved on this Free project.
-The exact guest email-change callback check remains
-[parked](phase-5-remediation.md#parked-operational-acceptance) because Supabase
-rate-limited the verification email.
+The guest email-change callback was later
+[verified in the deployed browser](phase-5-remediation.md#email-change-callback-acceptance)
+after custom SMTP was configured.
 
 ## Remaining security advisor notices
 

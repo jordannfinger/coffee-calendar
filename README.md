@@ -172,7 +172,7 @@ Then:
 npm run dev
 ```
 
-Open http://localhost:3000 — the app is immediately usable, no login. If you want to test the "Save my data" flow (linking to a real email/password account), note Supabase's default email provider is rate-limited; configure custom SMTP in your Supabase project's Auth settings for heavier testing.
+Open http://localhost:3000 — the app is immediately usable, no login. The hosted Supabase project sends account email through the Coffee Calendar Inkbox mailbox. Local development connected to that project sends real email too.
 
 ### Other scripts
 
@@ -188,7 +188,8 @@ GitHub Actions runs these checks for pull requests and pushes to `main`. The
 browser tests build the app with local mock credentials. They cover guest
 account claiming through the email-change callback and check that the saved
 coffee stays with the same user. They do not access the hosted database or send
-real email; live email confirmation remains a separate acceptance check.
+real email. The deployed email-change callback was verified separately on
+2026-09-29; see [Phase 5 acceptance](docs/phase-5-remediation.md#email-change-callback-acceptance).
 
 ---
 
@@ -209,7 +210,7 @@ and restore procedure in [docs/backup-recovery.md](docs/backup-recovery.md).
 
 ## 8. Feature additions beyond the MVP
 
-- **Peak alerts** ([`alerts.ts`](src/lib/coffee/alerts.ts)) — a banner on `/today` flags any coffee entering or leaving its peak window tomorrow. This is the in-app equivalent of "your coffee enters peak tomorrow"; there's no email/push infrastructure wired up (no SMTP/email-provider credentials configured), so it surfaces the same signal directly in the UI instead of as a notification. Wiring up real email/push would mean adding a mail provider (e.g. Resend) plus a scheduled job (Vercel Cron or Supabase's `pg_cron`) to run the same query daily.
+- **Peak alerts** ([`alerts.ts`](src/lib/coffee/alerts.ts)) — a banner on `/today` flags any coffee entering or leaving its peak window tomorrow. Account-email SMTP is configured, but the app has no scheduled alert job or notification sender. The banner therefore remains the only alert delivery channel.
 - **Brew log** (`brew_logs` table, [`BrewLogSection.tsx`](src/components/coffee/BrewLogSection.tsx)) — log individual brew attempts (grind, dose, water, drawdown, rating, notes, a "locked" flag for a repeatable result) per coffee, separate from the coffee's own single "current recipe" fields.
 - **Data export** ([`exportCoffees.ts`](src/lib/coffee/exportCoffees.ts)) — CSV/JSON export of My Coffee, generated client-side. Particularly relevant now that data lives in anonymous sessions by default — export is a safety net independent of "Save my data."
 - **Storage tracking** — `storage_method` (free text, with common suggestions) and `bag_opened_date` on each coffee. Informational only; see Assumptions below for why it doesn't affect the calculation.
@@ -228,4 +229,4 @@ and restore procedure in [docs/backup-recovery.md](docs/backup-recovery.md).
 - **A shared coffee's link has no expiry or revocation history** — "Stop sharing" clears `share_token`, but anyone who already has the old link and re-shares it before it's cleared could theoretically race a viewer; low-stakes for this app's data, but worth knowing.
 - **Grind size and brew method are not factored into timing** — they're tracked on a saved coffee for reference, but degassing/staling after grinding is a different, much faster timescale than whole-bean storage, which is out of scope here.
 - **The model is a synthesis of public guidance, not a peer-reviewed standard.** Sources disagree meaningfully (not just by a day or two); confidence ratings communicate where the evidence is strong versus thin. See the research doc's explicit caveats section.
-- **Supabase's default email provider is rate-limited.** For production use beyond light testing, configure custom SMTP in the Supabase dashboard.
+- **Account email uses custom SMTP.** Supabase Auth sends through `coffee-calendar@inkboxmail.com` on the free Inkbox plan. Its API key is stored outside Git. Delivery and rate limits should be monitored as usage grows.
