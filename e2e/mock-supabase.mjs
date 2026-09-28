@@ -1,17 +1,25 @@
 import { createServer } from "node:http";
+import { createHash } from "node:crypto";
 
 const userId = "00000000-0000-4000-8000-000000000001";
 const origin = "http://127.0.0.1:3100";
 let coffees = [];
 let pendingEmail = null;
+let email = null;
+let anonymous = true;
+let codeChallenge = null;
+let redirectTo = null;
 
 function user() {
   return {
     id: userId,
     aud: "authenticated",
     role: "authenticated",
-    is_anonymous: true,
-    app_metadata: { provider: "anonymous", providers: ["anonymous"] },
+    email,
+    is_anonymous: anonymous,
+    app_metadata: anonymous
+      ? { provider: "anonymous", providers: ["anonymous"] }
+      : { provider: "email", providers: ["email"] },
     user_metadata: {},
     identities: [],
     created_at: "2026-01-01T00:00:00.000Z",
@@ -57,16 +65,52 @@ createServer(async (req, res) => {
   if (url.pathname === "/__reset" && req.method === "POST") {
     coffees = [];
     pendingEmail = null;
+    email = null;
+    anonymous = true;
+    codeChallenge = null;
+    redirectTo = null;
     return respond(res, 200, { ok: true });
   }
   if (url.pathname === "/__state") {
-    return respond(res, 200, { userId, pendingEmail, coffees: coffees.map(({ id, name }) => ({ id, name })) });
+    return respond(res, 200, {
+      userId, email, anonymous, pendingEmail,
+      verificationUrl: pendingEmail ? `${url.origin}/auth/v1/verify?token=mock-email-change-token&type=email_change` : null,
+      coffees: coffees.map(({ id, name, user_id }) => ({ id, name, user_id })),
+    });
   }
   if (url.pathname === "/auth/v1/signup" && req.method === "POST") return respond(res, 200, session());
-  if (url.pathname === "/auth/v1/token" && req.method === "POST") return respond(res, 200, session());
+  if (url.pathname === "/auth/v1/token" && req.method === "POST") {
+    if (url.searchParams.get("grant_type") !== "pkce") return respond(res, 200, session());
+    const { auth_code: authCode, code_verifier: verifier } = await readJson(req);
+    const challenge = verifier && createHash("sha256").update(verifier).digest("base64url");
+    if (authCode !== "mock-email-change-code" || !pendingEmail || !codeChallenge || challenge !== codeChallenge) {
+      return respond(res, 400, { code: "invalid_grant", msg: "Invalid email-change code or verifier" });
+    }
+    email = pendingEmail;
+    pendingEmail = null;
+    anonymous = false;
+    codeChallenge = null;
+    redirectTo = null;
+    return respond(res, 200, session());
+  }
+  if (url.pathname === "/auth/v1/verify" && req.method === "GET") {
+    if (!pendingEmail || url.searchParams.get("token") !== "mock-email-change-token" ||
+        url.searchParams.get("type") !== "email_change" || !redirectTo) {
+      return respond(res, 400, { message: "Invalid verification link" });
+    }
+    const destination = new URL(redirectTo);
+    if (destination.origin !== origin || destination.pathname !== "/auth/callback") {
+      return respond(res, 400, { message: "Invalid callback destination" });
+    }
+    destination.searchParams.set("code", "mock-email-change-code");
+    return respond(res, 302, null, { location: destination.toString() });
+  }
   if (url.pathname === "/auth/v1/user" && req.method === "GET") return respond(res, 200, user());
   if (url.pathname === "/auth/v1/user" && req.method === "PUT") {
-    pendingEmail = (await readJson(req)).email ?? null;
+    const attributes = await readJson(req);
+    pendingEmail = attributes.email ?? null;
+    codeChallenge = attributes.code_challenge ?? null;
+    redirectTo = url.searchParams.get("redirect_to");
     return respond(res, 200, user());
   }
   if (url.pathname === "/rest/v1/process_profiles" || url.pathname === "/rest/v1/brew_logs") {

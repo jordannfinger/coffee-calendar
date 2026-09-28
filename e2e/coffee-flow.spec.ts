@@ -20,7 +20,7 @@ test("calculator responds to coffee choices in the browser", async ({ page }) =>
   await expect(page).toHaveURL(/\/search$/);
 });
 
-test("a guest can save a coffee and start claiming the same data", async ({ page, request }) => {
+test("a guest can claim an account without losing the saved coffee", async ({ page, request }) => {
   await page.goto("/coffee/new");
   await expect(page.getByRole("heading", { name: "Add a coffee" })).toBeVisible();
 
@@ -50,6 +50,20 @@ test("a guest can save a coffee and start claiming the same data", async ({ page
   const state = await (await request.get(`${mockUrl}/__state`)).json();
   expect(state.pendingEmail).toBe("coffee-test@example.com");
   expect(state.coffees).toHaveLength(1);
+  expect(state.coffees[0].user_id).toBe(state.userId);
+  expect(state.verificationUrl).toBeTruthy();
   await page.goto("/coffee");
   await expect(page.getByText("CI Test Coffee")).toBeVisible();
+
+  await page.goto(state.verificationUrl);
+  await expect(page).toHaveURL(/\/today$/);
+  await page.goto("/coffee");
+  await expect(page.getByText("CI Test Coffee")).toBeVisible();
+  await expect(guestReminder).not.toBeVisible();
+  const claimed = await (await request.get(`${mockUrl}/__state`)).json();
+  expect(claimed.userId).toBe(state.userId);
+  expect(claimed.email).toBe("coffee-test@example.com");
+  expect(claimed.anonymous).toBe(false);
+  expect(claimed.pendingEmail).toBeNull();
+  expect(claimed.coffees[0].user_id).toBe(state.userId);
 });

@@ -185,9 +185,10 @@ npm run build        # production build
 ```
 
 GitHub Actions runs these checks for pull requests and pushes to `main`. The
-browser tests build the app with local mock credentials; they do not access the
-hosted database or send real email. Live email confirmation remains a separate
-acceptance check.
+browser tests build the app with local mock credentials. They cover guest
+account claiming through the email-change callback and check that the saved
+coffee stays with the same user. They do not access the hosted database or send
+real email; live email confirmation remains a separate acceptance check.
 
 ---
 
