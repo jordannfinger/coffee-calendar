@@ -21,10 +21,20 @@ owner isolation, public share projection and revocation, brew-log parent
 ownership, and cascade behavior. All 88 tests pass; type checking, linting,
 the production build, and `git diff --check` pass.
 
-The performance advisor still reports the informational
-[`coffees_roast_date_idx` unused-index notice](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).
-With seven coffees and no evidence that dropping it helps, the index is left
-in place. The Auth leaked-password-protection setting remains a separate
-operational follow-up. The exact guest email-change callback check is
+## Unused roast-date index
+
+The remaining informational
+[`coffees_roast_date_idx` unused-index notice](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index)
+had zero recorded scans. The inventory query filters by `user_id` before
+ordering by `roast_date` and `id`; the separate `user_id` index had recorded
+scans. Migration `20260928024554_drop_unused_roast_date_index.sql` removes
+only the roast-date index. The hosted performance advisor now has no notices;
+the owner index remains, and row counts are still one Auth user, seven coffees,
+and zero brew logs. Revisit a composite owner/date/ID index if inventory size
+and query plans later show a need for it.
+
+[Leaked password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
+is Pro-only, so its advisor warning cannot be resolved on this Free project.
+The exact guest email-change callback check remains
 [parked](phase-5-remediation.md#parked-operational-acceptance) because Supabase
 rate-limited the verification email.
