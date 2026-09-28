@@ -56,7 +56,7 @@ docs/
 | `/about` | Methodology, confidence levels, uncertainty |
 | `/today` | "What should I drink today?" ranked list |
 | `/calendar` | Month grid of every saved coffee's status per day |
-| `/coffee` | My Coffee — saved coffee list, with sort/filter and CSV/JSON export |
+| `/coffee` | My Coffee — saved coffee list, with sort/filter, CSV/JSON export, and JSON restore |
 | `/coffee/new`, `/coffee/[id]`, `/coffee/[id]/edit` | Add/view/edit a coffee, including its brew log and share link |
 | `/c/[shareToken]` | Public, read-only view of one shared coffee — no login, no personal fields |
 | `/login`, `/signup`, `/reset-password`, `/update-password` | Optional: claim an anonymous session into a real account, or log into an existing one |
@@ -212,7 +212,7 @@ and restore procedure in [docs/backup-recovery.md](docs/backup-recovery.md).
 
 - **Peak alerts** ([`alerts.ts`](src/lib/coffee/alerts.ts)) — a banner on `/today` flags any coffee entering or leaving its peak window tomorrow. Account-email SMTP is configured, but the app has no scheduled alert job or notification sender. The banner therefore remains the only alert delivery channel.
 - **Brew log** (`brew_logs` table, [`BrewLogSection.tsx`](src/components/coffee/BrewLogSection.tsx)) — log individual brew attempts (grind, dose, water, drawdown, rating, notes, a "locked" flag for a repeatable result) per coffee, separate from the coffee's own single "current recipe" fields.
-- **Data export** ([`exportCoffees.ts`](src/lib/coffee/exportCoffees.ts)) — CSV/JSON export of My Coffee, generated client-side. Particularly relevant now that data lives in anonymous sessions by default — export is a safety net independent of "Save my data."
+- **Data export and restore** ([`exportCoffees.ts`](src/lib/coffee/exportCoffees.ts), [`importCoffees.ts`](src/lib/coffee/importCoffees.ts)) — CSV/JSON export of My Coffee, generated client-side. A JSON export can be imported into the current account or guest session from `/coffee`. The full file is validated before a confirmation button appears. Imports add missing coffees without replacing existing ones, and repeating the same file skips existing records. Old share links, ownership and timestamps are discarded. Brew logs are not included in coffee JSON exports or restored by this flow.
 - **Storage tracking** — `storage_method` (free text, with common suggestions) and `bag_opened_date` on each coffee. Informational only; see Assumptions below for why it doesn't affect the calculation.
 - **Shareable public coffee page** (`/c/[shareToken]`, [`ShareSection.tsx`](src/components/coffee/ShareSection.tsx)) — generate a public link to one coffee's status and peak window. No login needed to view; personal fields are never exposed (see the `share_token` schema note above).
 - **Sort/filter on My Coffee** — by status, process, roaster, and roast date, purely client-side over the already-fetched list.
@@ -221,7 +221,7 @@ and restore procedure in [docs/backup-recovery.md](docs/backup-recovery.md).
 
 ## 9. Assumptions and limitations
 
-- **Anonymous sessions aren't portable across browsers/devices** unless claimed via "Save my data." Clearing cookies or site data on a device that never claimed its session loses that data permanently — there's no recovery path, since nothing ties an unclaimed anonymous user back to a person.
+- **Anonymous sessions aren't portable across browsers/devices** unless claimed via "Save my data." Clearing cookies or site data on a device that never claimed its session loses access to its saved coffees. A previously downloaded JSON export can restore the coffee records into a new guest session; without that file there is no recovery path, since nothing ties an unclaimed anonymous user back to a person. Brew logs and share links are not restored from JSON.
 - **`order_date` is optional**, despite being listed as required in the original brief — it doesn't feed the calculation engine, and making it mandatory would add form friction without a UX benefit.
 - **Dark roast is intentionally unsupported** (roast levels stop at Medium-Dark), per the brief — the model's evidence base for dark roast + filter brewing specifically is thin.
 - **Process subtype does not currently perturb the calculation** — it's tracked for reference (and shown in the UI) but the model only varies by process family + roast level. A `process_profiles` override row can be scoped to a specific subtype if real-world data justifies a different number.

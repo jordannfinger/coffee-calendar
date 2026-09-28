@@ -118,9 +118,13 @@ createServer(async (req, res) => {
   }
   if (url.pathname === "/rest/v1/coffees" && req.method === "POST") {
     const input = await readJson(req);
-    const row = { ...input, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), share_token: null };
-    coffees = [...coffees.filter((coffee) => coffee.id !== row.id), row];
-    return respond(res, 201, { id: row.id });
+    const incoming = Array.isArray(input) ? input : [input];
+    if (incoming.some((coffee) => coffees.some((existing) => existing.id === coffee.id))) {
+      return respond(res, 409, { message: "duplicate coffee ID" });
+    }
+    const rows = incoming.map((coffee) => ({ ...coffee, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), share_token: null }));
+    coffees = [...coffees, ...rows];
+    return respond(res, 201, Array.isArray(input) ? rows : { id: rows[0].id });
   }
   if (url.pathname === "/rest/v1/coffees" && req.method === "GET") {
     const id = url.searchParams.get("id")?.replace(/^eq\./, "");

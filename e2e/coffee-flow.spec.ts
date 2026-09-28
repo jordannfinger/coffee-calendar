@@ -67,3 +67,25 @@ test("a guest can claim an account without losing the saved coffee", async ({ pa
   expect(claimed.pendingEmail).toBeNull();
   expect(claimed.coffees[0].user_id).toBe(state.userId);
 });
+
+test("a guest can restore a JSON export without duplicating it on retry", async ({ page, request }) => {
+  const { userId } = await (await request.get(`${mockUrl}/__state`)).json();
+  const exportRow = {
+    id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", user_id: userId,
+    name: "Restored Coffee", roaster: "Test Roaster", origin: "Ethiopia",
+    roast_date: "2026-09-01", process: "washed", roast_level: "light",
+    share_token: "never-reuse-this-link", notes: "A private note",
+  };
+  await page.goto("/coffee");
+  const file = { name: "coffee-calendar-export.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify([exportRow])) };
+  await page.getByLabel("JSON export").setInputFiles(file);
+  await expect(page.getByText("Ready to add from coffee-calendar-export.json")).toBeVisible();
+  expect((await (await request.get(`${mockUrl}/__state`)).json()).coffees).toHaveLength(0);
+  await page.getByRole("button", { name: "Import 1 coffee" }).click();
+  await expect(page.getByRole("status")).toContainText("1 coffee imported; 0 already present");
+  await expect(page.getByText("Restored Coffee")).toBeVisible();
+  await page.getByLabel("JSON export").setInputFiles(file);
+  await page.getByRole("button", { name: "Import 1 coffee" }).click();
+  await expect(page.getByRole("status")).toContainText("0 coffees imported; 1 already present");
+  expect((await (await request.get(`${mockUrl}/__state`)).json()).coffees).toHaveLength(1);
+});

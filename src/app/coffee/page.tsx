@@ -11,6 +11,7 @@ import { parseDateOnly } from "@/lib/coffee/dateUtils";
 import { useToday } from "@/lib/coffee/useToday";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { CoffeeCard } from "@/components/coffee/CoffeeCard";
+import { ImportCoffees } from "@/components/coffee/ImportCoffees";
 import { exportCoffeesAsCsv, exportCoffeesAsJson } from "@/lib/coffee/exportCoffees";
 import { buttonClasses, Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -21,7 +22,7 @@ import type { CoffeeStatus } from "@/lib/coffee/types";
 type SortKey = "status" | "roast_date_desc" | "roast_date_asc" | "name";
 
 function MyCoffeeContent() {
-  const { coffees, isAnonymous, loading, error, refresh } = useCoffees();
+  const { userId, coffees, isAnonymous, loading, error, refresh } = useCoffees();
   const overrides = useProfileOverrides();
   const now = useToday();
 
@@ -103,6 +104,8 @@ function MyCoffeeContent() {
           </div>
         </Card>
       )}
+
+      {userId && <ImportCoffees key={userId} userId={userId} refresh={refresh} disabled={loading || !!error} />}
 
       {loading && <p className="text-sm text-foreground-muted">Loading your coffees…</p>}
       {error && <ResourceError message={error} retry={refresh} />}

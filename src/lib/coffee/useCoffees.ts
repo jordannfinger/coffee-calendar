@@ -52,6 +52,7 @@ export function useCoffees() {
 
   const current = userId && result?.userId === userId ? result : null;
   return {
+    userId,
     coffees: current?.coffees ?? [],
     isAnonymous: user?.is_anonymous ?? false,
     loading: authLoading || (!!userId && (loading || !current)),
