@@ -11,7 +11,6 @@ import { statusLine } from "@/components/coffee/CoffeeCard";
 import { parseDateOnly, formatWithWeekday } from "@/lib/coffee/dateUtils";
 import { useToday } from "@/lib/coffee/useToday";
 import { StatusBadge } from "@/lib/coffee/statusIcons";
-import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
 import { Card } from "@/components/ui/Card";
 import { ResourceError } from "@/components/ui/ResourceError";
@@ -49,65 +48,70 @@ function TodayContent() {
   if (error) return <div className="mx-auto max-w-3xl px-4 py-10"><ResourceError message={error} retry={refresh} /></div>;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-3xl font-semibold">What should I drink today?</h1>
-      <p className="mt-1 text-foreground-muted">{formatWithWeekday(targetDate)}</p>
+    <div className="page-shell">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-7">
+        <div>
+          <p className="eyebrow mb-2">{formatWithWeekday(targetDate)}</p>
+          <h1 className="page-title">What should I drink today?</h1>
+          <p className="mt-2 text-sm text-foreground-muted">Your saved coffees, ordered by how well they should brew right now.</p>
+        </div>
+        <Link href="/coffee/new" className={buttonClasses("primary")}>Add coffee</Link>
+      </div>
 
       {alerts.length > 0 && (
-        <Card className="mt-6 flex flex-col gap-2 border-status-peak-border bg-status-peak-bg">
+        <div className="mb-7 flex flex-col gap-2 rounded-lg border border-status-peak-border bg-status-peak-bg px-4 py-3">
           {alerts.map((alert) => (
             <p key={`${alert.item.id}-${alert.type}`} className="text-sm text-status-peak-text">
-              <span aria-hidden="true">{alert.type === "entering_peak_tomorrow" ? "⭐" : "🟠"}</span>{" "}
               <Link href={`/coffee/${alert.item.id}`} className="font-semibold underline decoration-current/40 underline-offset-2">
                 {alert.item.name}
               </Link>{" "}
               {alert.type === "entering_peak_tomorrow" ? "enters peak tomorrow" : "leaves peak tomorrow"}.
             </p>
           ))}
-        </Card>
+        </div>
       )}
 
-      {loading && <p className="mt-8 text-sm text-foreground-muted">Loading your coffees…</p>}
+      {loading && <div role="status" className="surface-panel h-32 animate-pulse p-6 text-sm text-foreground-muted">Loading your coffees…</div>}
 
       {!loading && coffees.length === 0 && (
-        <Card className="mt-8 flex flex-col items-center gap-3 py-12 text-center">
-          <p className="font-display text-lg font-semibold">No coffees saved yet</p>
-          <p className="max-w-sm text-sm text-foreground-muted">Add a coffee and we’ll rank it here against everything else you have brewing.</p>
+        <Card className="flex flex-col items-start gap-3 py-10">
+          <p className="section-title">Nothing to choose from yet.</p>
+          <p className="max-w-sm text-sm leading-6 text-foreground-muted">Add a coffee from its bag details and we’ll show when it is ready to brew.</p>
           <Link href="/coffee/new" className={buttonClasses("primary")}>
-            + Add a coffee
+            Add a coffee
           </Link>
         </Card>
       )}
 
       {!loading && coffees.length > 0 && ranked.length === 0 && (
-        <p className="mt-8 text-sm text-foreground-muted">All your bags are finished. Your history is still in My Coffee.</p>
+        <div className="surface-panel p-6 text-sm text-foreground-muted">All your bags are finished. Your history is still in <Link href="/coffee" className="font-semibold text-brand underline underline-offset-4">My coffee</Link>.</div>
       )}
 
-      <ul className="mt-8 flex flex-col gap-4">
+      {ranked.length > 0 && <div className="mb-3 flex items-center justify-between"><h2 className="section-title">Your options</h2><span className="text-sm text-foreground-muted">{ranked.length} {ranked.length === 1 ? "coffee" : "coffees"}</span></div>}
+      {ranked.length > 0 && <ul className="overflow-hidden rounded-xl border border-border bg-surface">
         {ranked.map((result) => {
           const peakIndex = peakRanked.indexOf(result);
           const headline = result.status === "peak" ? RANK_HEADLINE[peakIndex] ?? "In peak" : undefined;
 
           return (
-            <li key={result.item.id}>
-              <Link href={`/coffee/${result.item.id}`}>
-                <Card className="flex flex-col gap-2 transition-shadow hover:shadow-md">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={result.status} />
-                    {headline && <span className="font-display text-sm font-semibold text-brand">{headline}</span>}
-                    <ConfidenceBadge confidence={result.window.confidence} className="ml-auto" />
+            <li key={result.item.id} className="border-b border-border last:border-0">
+              <Link href={`/coffee/${result.item.id}`} className="flex flex-col gap-3 px-5 py-5 transition-colors hover:bg-surface-muted/70 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div className="min-w-0">
+                  {headline && <p className="mb-1 text-xs font-semibold text-brand">{headline}</p>}
+                  <h3 className="font-display text-xl font-semibold">{result.item.name}</h3>
+                  <p className="mt-1 text-sm text-foreground-muted">{result.item.roaster} · {result.item.origin} · {PROCESS_OFFSETS[result.item.process].label}</p>
+                </div>
+                <div className="flex shrink-0 flex-wrap items-center gap-3 sm:justify-end">
+                  <div className="text-left sm:text-right">
+                    <StatusBadge status={result.status} size="sm" />
+                    <p className="mt-1 text-xs text-foreground-muted">{statusLine(result.window, targetDate)}</p>
                   </div>
-                  <h2 className="font-display text-xl font-semibold">{result.item.name}</h2>
-                  <p className="text-sm text-foreground-muted">
-                    {result.item.roaster} · {PROCESS_OFFSETS[result.item.process].label}
-                  </p>
-                  <p className="text-sm font-medium text-foreground">{statusLine(result.window, targetDate)}</p>
-                </Card>
+                </div>
               </Link>
             </li>
           );
         })}
-      </ul>
+      </ul>}
     </div>
   );
 }

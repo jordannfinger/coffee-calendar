@@ -23,7 +23,7 @@ export function Field({
   });
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
         {label}
       </label>
@@ -39,6 +39,6 @@ export function Field({
 }
 
 const baseInputClasses =
-  "w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground shadow-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60";
+  "min-h-11 w-full min-w-0 rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground transition-colors placeholder:text-foreground-muted/70 hover:border-foreground-muted/50 focus:border-brand disabled:cursor-not-allowed disabled:opacity-60";
 
 export { baseInputClasses };

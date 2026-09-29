@@ -14,7 +14,6 @@ import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { Card } from "@/components/ui/Card";
 import { ResourceError } from "@/components/ui/ResourceError";
-import { buttonClasses } from "@/components/ui/Button";
 import type { Database } from "@/lib/supabase/database.types";
 
 type SharedCoffee = Database["public"]["Functions"]["get_shared_coffee"]["Returns"][number];
@@ -66,17 +65,16 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
     };
   }, [shareToken, attempt]);
 
-  if (loading) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6" aria-busy="true" />;
+  if (loading) return <div className="page-shell max-w-3xl" aria-busy="true"><div className="h-8 w-48 animate-pulse rounded bg-surface-muted" /><div className="mt-8 h-48 animate-pulse rounded bg-surface-muted" /></div>;
 
-  if (error) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6"><ResourceError message={error} retry={() => setAttempt(value => value + 1)} /></div>;
+  if (error) return <div className="page-shell max-w-3xl"><ResourceError message={error} retry={() => setAttempt(value => value + 1)} /></div>;
 
   if (notFound || !coffee) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6">
-        <p className="text-foreground-muted">This share link is no longer active.</p>
-        <Link href="/" className="mt-4 inline-block underline decoration-border underline-offset-2">
-          Go to Coffee Calendar
-        </Link>
+      <div className="page-shell max-w-3xl">
+        <p className="eyebrow">Shared coffee</p>
+        <h1 className="page-title mt-3">This link is no longer active</h1>
+        <Link href="/" className="mt-6 inline-block text-sm font-semibold text-brand-strong underline underline-offset-4">Go to Coffee Calendar</Link>
       </div>
     );
   }
@@ -91,14 +89,14 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
   const status = getCoffeeStatus(coffeeWindow, now);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-foreground-muted">Shared coffee</p>
-      <h1 className="font-display text-3xl font-semibold">{coffee.name}</h1>
-      <p className="text-foreground-muted">{coffee.roaster}</p>
+    <div className="page-shell max-w-3xl">
+      <p className="eyebrow">Shared coffee</p>
+      <h1 className="page-title mt-3">{coffee.name}</h1>
+      <p className="mt-2 text-foreground-muted">{coffee.roaster}</p>
 
       <Card className="my-6 flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold">Drinking window</h2>
+          <h2 className="section-title">Drinking window</h2>
           <div className="flex items-center gap-2">
             <StatusBadge status={status} />
             <ConfidenceBadge confidence={coffeeWindow.confidence} />
@@ -109,7 +107,7 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
       </Card>
 
       <Card className="mb-6">
-        <h2 className="mb-4 font-display text-lg font-semibold">Details</h2>
+        <h2 className="section-title mb-4">Details</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <DetailRow label="Origin" value={coffee.origin} />
           <DetailRow label="Process" value={`${PROCESS_OFFSETS[coffee.process].label}${coffee.process_subtype ? ` — ${coffee.process_subtype}` : ""}`} />
@@ -129,7 +127,7 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
 
       {(coffee.brew_method || coffee.grind_setting || coffee.recipe || coffee.dose_g || coffee.water_g) && (
         <Card className="mb-6">
-          <h2 className="mb-4 font-display text-lg font-semibold">Brewing</h2>
+          <h2 className="section-title mb-4">Brewing</h2>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <DetailRow label="Brew method" value={coffee.brew_method} />
             <DetailRow label="Grind setting" value={coffee.grind_setting} />
@@ -144,12 +142,9 @@ export default function SharedCoffeePage({ params }: { params: Promise<{ shareTo
         </Card>
       )}
 
-      <Card className="bg-brand-tint/50 text-center text-sm text-foreground-muted">
-        Track your own coffee at{" "}
-        <Link href="/" className={buttonClasses("secondary", "sm", "ml-2")}>
-          Coffee Calendar →
-        </Link>
-      </Card>
+      <p className="border-t border-border pt-6 text-sm text-foreground-muted">
+        Plan your own coffee dates with <Link href="/" className="font-semibold text-brand-strong underline underline-offset-4">Coffee Calendar</Link>.
+      </p>
     </div>
   );
 }

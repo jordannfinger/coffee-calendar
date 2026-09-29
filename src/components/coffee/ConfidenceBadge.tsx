@@ -15,7 +15,7 @@ const CLASSES: Record<Confidence, string> = {
 
 export function ConfidenceBadge({ confidence, className }: { confidence: Confidence; className?: string }) {
   return (
-    <span className={clsx("inline-flex items-center gap-1.5 rounded-full border bg-surface px-2.5 py-1 text-xs font-medium", CLASSES[confidence], className)}>
+    <span className={clsx("inline-flex items-center gap-1.5 rounded-md border bg-surface px-2.5 py-1 text-xs font-medium", CLASSES[confidence], className)}>
       <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
       {LABEL[confidence]}
     </span>

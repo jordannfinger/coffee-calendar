@@ -13,7 +13,6 @@ import { StatusBadge } from "@/lib/coffee/statusIcons";
 import { ConfidenceBadge } from "@/components/coffee/ConfidenceBadge";
 import { statusLine } from "@/components/coffee/CoffeeCard";
 import { PROCESS_OFFSETS } from "@/lib/coffee/model";
-import { Card } from "@/components/ui/Card";
 import { ResourceError } from "@/components/ui/ResourceError";
 import { Field, baseInputClasses } from "@/components/ui/Field";
 import { hasCoffeeRemaining, type CoffeeRow } from "@/lib/coffee/coffeeTypes";
@@ -59,11 +58,14 @@ export default function SearchPage() {
   }, [targetDate, guidanceRoastLevel, overrides]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-3xl font-semibold">When do you want coffee?</h1>
-      <p className="mt-1 text-foreground-muted">Pick a date — we’ll rank what you should drink and tell you when to order.</p>
+    <div className="page-shell">
+      <div className="border-b border-border pb-7">
+        <p className="eyebrow mb-2">Looking ahead</p>
+        <h1 className="page-title">Plan a date</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">Choose a day to see which saved coffees will be ready, or when a new coffee should be roasted.</p>
+      </div>
 
-      <Card className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end">
+      <div className="surface-panel mt-6 grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
         <Field label="Drink date" htmlFor="search-date">
           <input id="search-date" type="date" className={baseInputClasses} value={dateStr} onChange={(e) => setDateStr(e.target.value)} />
         </Field>
@@ -77,14 +79,14 @@ export default function SearchPage() {
             ))}
           </select>
         </Field>
-        <label className="flex items-center gap-2 pb-2.5 text-sm font-medium">
-          <input type="checkbox" checked={peakOnly} onChange={(e) => setPeakOnly(e.target.checked)} className="h-4 w-4 rounded border-border" />
+        <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+          <input type="checkbox" checked={peakOnly} onChange={(e) => setPeakOnly(e.target.checked)} className="size-4 rounded border-border accent-brand" />
           Peak only
         </label>
-      </Card>
+      </div>
 
-      <section className="mt-8">
-        <h2 className="mb-3 font-display text-xl font-semibold">Best options from your coffees</h2>
+      <section className="mt-10 max-w-4xl">
+        <h2 className="mb-4 section-title">From your coffees</h2>
         {loading ? <p className="text-sm text-foreground-muted">Loading your coffees…</p> : error ? (
           <ResourceError message={error} retry={refresh} />
         ) : coffees.length === 0 ? (
@@ -96,13 +98,13 @@ export default function SearchPage() {
             to see it ranked here.
           </p>
         ) : rankedCoffees.length === 0 ? (
-          <p className="text-sm text-foreground-muted">No saved coffees match those filters for {formatLong(targetDate)}.</p>
+          <div className="surface-panel p-5 text-sm text-foreground-muted">No saved coffees match these filters for {formatLong(targetDate)}. Try another process or turn off Peak only.</div>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="overflow-hidden rounded-xl border border-border bg-surface">
             {rankedCoffees.map((result) => (
               <li key={result.item.id}>
-                <Link href={`/coffee/${result.item.id}`}>
-                  <Card className="flex flex-wrap items-center justify-between gap-3 transition-shadow hover:shadow-md">
+                <Link href={`/coffee/${result.item.id}`} className="block border-b border-border p-4 transition-colors hover:bg-surface-muted/70 sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold">{result.item.name}</p>
                       <p className="text-sm text-foreground-muted">
@@ -113,7 +115,7 @@ export default function SearchPage() {
                       <StatusBadge status={result.status} size="sm" />
                       <span className="text-sm text-foreground-muted">{statusLine(result.window, targetDate)}</span>
                     </div>
-                  </Card>
+                  </div>
                 </Link>
               </li>
             ))}
@@ -121,9 +123,9 @@ export default function SearchPage() {
         )}
       </section>
 
-      <section className="mt-10">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-xl font-semibold">Ordering guidance</h2>
+      <section className="mt-12">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+          <div><p className="eyebrow mb-1">Buying something new?</p><h2 className="section-title">Roast date guidance</h2></div>
           <Field label="Roast level" htmlFor="guidance-roast-level">
             <select
               id="guidance-roast-level"
@@ -143,7 +145,16 @@ export default function SearchPage() {
           If you want coffee on {formatLong(targetDate)}, here’s roughly when to have it roasted for each process, at{" "}
           {ROAST_LEVEL_OPTIONS.find((o) => o.value === guidanceRoastLevel)?.label.toLowerCase()} roast.
         </p>
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
+        <div className="grid gap-2 md:hidden">
+          {guidance.filter((g) => processFilter === "all" || g.input.process === processFilter).map((g) => (
+            <div key={g.input.process} className="surface-panel p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">{PROCESS_OFFSETS[g.input.process].label}</h3><ConfidenceBadge confidence={g.window.confidence} /></div>
+              <p className="mt-2 text-sm">Look for a roast around <strong>{formatLong(g.recommendedRoastDate)}</strong></p>
+              <p className="mt-1 text-xs text-foreground-muted">Estimated peak {formatLong(g.window.peakFrom)} – {formatLong(g.window.peakUntil)}</p>
+            </div>
+          ))}
+        </div>
+        <div tabIndex={0} aria-label="Roast date guidance table" className="hidden overflow-x-auto rounded-xl border border-border bg-surface md:block">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-wide text-foreground-muted">

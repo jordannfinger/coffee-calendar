@@ -1,39 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fbf6ef;
+  color-scheme: light;
+  --background: #f7f7f3;
   --surface: #ffffff;
-  --surface-muted: #f4ebdd;
-  --border: #e6d9c3;
-  --foreground: #2a2019;
-  --foreground-muted: #6b5c4c;
-
-  --brand: #7a4b2e;
-  --brand-strong: #4f2f1c;
-  --brand-tint: #f0e0cd;
+  --surface-muted: #eff1eb;
+  --border: #dce2d8;
+  --foreground: #1d2923;
+  --foreground-muted: #5d6c62;
+  --brand: #285d49;
+  --brand-strong: #194735;
+  --brand-tint: #e4eee7;
   --primary-foreground: #ffffff;
-
-  --status-not-ready-bg: #fbeaea;
-  --status-not-ready-text: #9c3b3b;
-  --status-not-ready-border: #edbcbc;
-
-  --status-drinkable-bg: #e7f3e7;
-  --status-drinkable-text: #2f6b3a;
-  --status-drinkable-border: #b7dcbb;
-
-  --status-peak-bg: #fcf0d4;
-  --status-peak-text: #8a5c0a;
-  --status-peak-border: #edc978;
-
-  --status-out-of-peak-bg: #fbead9;
-  --status-out-of-peak-text: #9a4e15;
-  --status-out-of-peak-border: #eebe8f;
-
-  --status-too-old-bg: #ece7e0;
-  --status-too-old-text: #5a4f43;
-  --status-too-old-border: #d3c8b8;
+  --status-not-ready-bg: #f3eee8;
+  --status-not-ready-text: #77533d;
+  --status-not-ready-border: #e5d4c5;
+  --status-drinkable-bg: #e8f0e9;
+  --status-drinkable-text: #315a41;
+  --status-drinkable-border: #c6dbcc;
+  --status-peak-bg: #f5e8d9;
+  --status-peak-text: #835127;
+  --status-peak-border: #e7c6a7;
+  --status-out-of-peak-bg: #f2ede6;
+  --status-out-of-peak-text: #6e5842;
+  --status-out-of-peak-border: #e0d4c5;
+  --status-too-old-bg: #edf0ed;
+  --status-too-old-text: #536158;
+  --status-too-old-border: #d5ddd5;
 }
-
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -41,87 +35,53 @@
   --color-border: var(--border);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
-
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-tint: var(--brand-tint);
   --color-primary-foreground: var(--primary-foreground);
-
   --color-status-not-ready-bg: var(--status-not-ready-bg);
   --color-status-not-ready-text: var(--status-not-ready-text);
   --color-status-not-ready-border: var(--status-not-ready-border);
-
   --color-status-drinkable-bg: var(--status-drinkable-bg);
   --color-status-drinkable-text: var(--status-drinkable-text);
   --color-status-drinkable-border: var(--status-drinkable-border);
-
   --color-status-peak-bg: var(--status-peak-bg);
   --color-status-peak-text: var(--status-peak-text);
   --color-status-peak-border: var(--status-peak-border);
-
   --color-status-out-of-peak-bg: var(--status-out-of-peak-bg);
   --color-status-out-of-peak-text: var(--status-out-of-peak-text);
   --color-status-out-of-peak-border: var(--status-out-of-peak-border);
-
   --color-status-too-old-bg: var(--status-too-old-bg);
   --color-status-too-old-text: var(--status-too-old-text);
   --color-status-too-old-border: var(--status-too-old-border);
-
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
 }
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1c1611;
-    --surface: #251d16;
-    --surface-muted: #2e241a;
-    --border: #3c2f22;
-    --foreground: #f2e8db;
-    --foreground-muted: #b9a891;
-
-    --brand: #d9a25f;
-    --brand-strong: #f0c184;
-    --brand-tint: #33271a;
-    --primary-foreground: #251d16;
-
-    --status-not-ready-bg: #3a2222;
-    --status-not-ready-text: #f0a8a8;
-    --status-not-ready-border: #5c3232;
-
-    --status-drinkable-bg: #1f3324;
-    --status-drinkable-text: #a3d9ab;
-    --status-drinkable-border: #305a3a;
-
-    --status-peak-bg: #3a2e12;
-    --status-peak-text: #f0cd7c;
-    --status-peak-border: #6b5320;
-
-    --status-out-of-peak-bg: #3a2a17;
-    --status-out-of-peak-text: #f0b57e;
-    --status-out-of-peak-border: #6b4a24;
-
-    --status-too-old-bg: #2b2620;
-    --status-too-old-text: #c9bda9;
-    --status-too-old-border: #453d32;
+    color-scheme: dark;
+    --background: #17211b; --surface: #202c24; --surface-muted: #2a392e;
+    --border: #3b4b3e; --foreground: #f1f3ed; --foreground-muted: #b8c5ba;
+    --brand: #a6d4b5; --brand-strong: #c2e5c9; --brand-tint: #304938;
+    --primary-foreground: #14251b;
+    --status-not-ready-bg: #3d3029; --status-not-ready-text: #ebc3a9; --status-not-ready-border: #604a3b;
+    --status-drinkable-bg: #263f2c; --status-drinkable-text: #b8dfbf; --status-drinkable-border: #41654a;
+    --status-peak-bg: #493827; --status-peak-text: #f4d2aa; --status-peak-border: #705337;
+    --status-out-of-peak-bg: #39332b; --status-out-of-peak-text: #d9c3a6; --status-out-of-peak-border: #5c4e3f;
+    --status-too-old-bg: #2b352e; --status-too-old-text: #c1cec3; --status-too-old-border: #47574a;
   }
 }
-
-* {
-  border-color: var(--border);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-}
-
-:where(a, button, input, select, textarea):focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
-
-::selection {
-  background: var(--brand-tint);
-  color: var(--brand-strong);
-}
+* { border-color: var(--border); }
+html { scroll-behavior: smooth; }
+body { background: var(--background); color: var(--foreground); }
+button, select, summary { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+::selection { background: var(--brand-tint); color: var(--brand-strong); }
+.page-shell { width: min(100% - 2rem, 76rem); margin-inline: auto; padding-block: 2.5rem 5rem; }
+.page-title { font-family: var(--font-display), Georgia, serif; font-size: clamp(2rem, 3vw, 2.65rem); line-height: 1.12; font-weight: 600; letter-spacing: -.035em; }
+.section-title { font-family: var(--font-display), Georgia, serif; font-size: 1.5rem; line-height: 1.2; font-weight: 600; letter-spacing: -.025em; }
+.eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: var(--foreground-muted); }
+.surface-panel { background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; }
+@media (min-width: 640px) { .page-shell { width: min(100% - 3rem, 76rem); padding-top: 3.5rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }

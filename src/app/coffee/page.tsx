@@ -87,10 +87,14 @@ function MyCoffeeContent() {
   const usedProcesses = useMemo(() => Array.from(new Set(coffees.map((c) => c.process))), [coffees]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-3xl font-semibold">My Coffee</h1>
-        <div className="flex items-center gap-2">
+    <div className="page-shell">
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-7">
+        <div>
+          <p className="eyebrow mb-2">Your collection</p>
+          <h1 className="page-title">My coffee</h1>
+          <p className="mt-2 text-sm text-foreground-muted">Every bag, its drinking window, and the brews you keep.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           {coffees.length > 0 && (
             <>
               <Button variant="secondary" size="sm" onClick={() => exportCoffeesAsCsv(coffees)}>
@@ -102,7 +106,7 @@ function MyCoffeeContent() {
             {exporting ? "Preparing backup…" : "Download backup"}
           </Button>
           <Link href="/coffee/new" className={buttonClasses("primary")}>
-            + Add coffee
+            Add coffee
           </Link>
         </div>
       </div>
@@ -125,39 +129,37 @@ function MyCoffeeContent() {
         </Card>
       )}
 
-      {userId && <ImportCoffees key={userId} userId={userId} refresh={refresh} disabled={loading || !!error} />}
-
       {loading && <p className="text-sm text-foreground-muted">Loading your coffees…</p>}
       {error && <ResourceError message={error} retry={refresh} />}
 
       {!loading && !error && coffees.length === 0 && (
-        <Card className="flex flex-col items-center gap-3 py-12 text-center">
-          <p className="font-display text-lg font-semibold">No coffees yet</p>
-          <p className="max-w-sm text-sm text-foreground-muted">Add your first bag to see its drinking window, track it on your calendar, and get it ranked on Drink Today.</p>
+        <Card className="flex flex-col items-start gap-3 py-10">
+          <p className="section-title">No coffees yet.</p>
+          <p className="max-w-md text-sm leading-6 text-foreground-muted">Add a bag to see its drinking window, track it on the calendar, and decide when to brew it.</p>
           <Link href="/coffee/new" className={buttonClasses("primary")}>
-            + Add your first coffee
+            Add your first coffee
           </Link>
         </Card>
       )}
 
       {!loading && !error && coffees.length > 0 && (
         <>
-          <Card className="mb-6 flex flex-wrap items-center gap-3 py-3">
+          <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <select
               aria-label="Filter by status"
-              className={`${baseInputClasses} w-auto`}
+              className={baseInputClasses}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as CoffeeStatus | "all")}
             >
               <option value="all">All statuses</option>
               {STATUS_ORDER.map((s) => (
                 <option key={s} value={s}>
-                  {STATUS_META[s].emoji} {STATUS_META[s].label}
+                  {STATUS_META[s].label}
                 </option>
               ))}
             </select>
 
-            <select aria-label="Filter by process" className={`${baseInputClasses} w-auto`} value={processFilter} onChange={(e) => setProcessFilter(e.target.value)}>
+            <select aria-label="Filter by process" className={baseInputClasses} value={processFilter} onChange={(e) => setProcessFilter(e.target.value)}>
               <option value="all">All processes</option>
               {usedProcesses.map((p) => (
                 <option key={p} value={p}>
@@ -167,7 +169,7 @@ function MyCoffeeContent() {
             </select>
 
             {roasters.length > 1 && (
-              <select aria-label="Filter by roaster" className={`${baseInputClasses} w-auto`} value={roasterFilter} onChange={(e) => setRoasterFilter(e.target.value)}>
+              <select aria-label="Filter by roaster" className={baseInputClasses} value={roasterFilter} onChange={(e) => setRoasterFilter(e.target.value)}>
                 <option value="all">All roasters</option>
                 {roasters.map((r) => (
                   <option key={r} value={r}>
@@ -177,16 +179,16 @@ function MyCoffeeContent() {
               </select>
             )}
 
-            <select aria-label="Sort by" className={`${baseInputClasses} ml-auto w-auto`} value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+            <select aria-label="Sort by" className={baseInputClasses} value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
               <option value="status">Sort: Status</option>
               <option value="roast_date_desc">Sort: Roast date (newest)</option>
               <option value="roast_date_asc">Sort: Roast date (oldest)</option>
               <option value="name">Sort: Name</option>
             </select>
-          </Card>
+          </div>
 
           {visible.length === 0 ? (
-            <p className="text-sm text-foreground-muted">No coffees match those filters.</p>
+            <div className="surface-panel p-6 text-sm text-foreground-muted">No coffees match these filters. Try a different status, process, or roaster.</div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((coffee) => (
@@ -196,6 +198,7 @@ function MyCoffeeContent() {
           )}
         </>
       )}
+      {userId && <div className="mt-10 border-t border-border pt-8"><ImportCoffees key={userId} userId={userId} refresh={refresh} disabled={loading || !!error} /></div>}
     </div>
   );
 }

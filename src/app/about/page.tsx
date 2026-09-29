@@ -10,12 +10,13 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-3xl font-semibold">How Coffee Calendar works</h1>
+    <div className="page-shell max-w-3xl">
+      <p className="eyebrow">The method</p>
+      <h1 className="page-title mt-3">How Coffee Calendar works</h1>
       <p className="mt-2 text-foreground-muted">Filter coffee only — no espresso. Here’s the model behind every date on this site.</p>
 
       <section className="mt-8 flex flex-col gap-3">
-        <h2 className="font-display text-xl font-semibold">The three questions</h2>
+        <h2 className="section-title">The three questions</h2>
         <p className="text-foreground-muted">Everything in Coffee Calendar exists to answer three things well:</p>
         <ol className="list-decimal space-y-1 pl-5 text-foreground-muted">
           <li>Can I drink this coffee yet?</li>
@@ -25,14 +26,29 @@ export default function AboutPage() {
       </section>
 
       <section className="mt-8 flex flex-col gap-3">
-        <h2 className="font-display text-xl font-semibold">The model</h2>
+        <h2 className="section-title">The model</h2>
         <p className="text-foreground-muted">
           We start from a roast-level baseline (in days since roast) for washed process — the best-documented, most consistent case
           across specialty roaster guidance — then apply a per-process day offset representing how much extra settling time a
           process’s fermentation intensity tends to need. Wet-hulled is the one process with a <em>negative</em> offset: it’s
           consistently described as best enjoyed fresh.
         </p>
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
+        <div className="divide-y divide-border rounded-md border border-border bg-surface sm:hidden">
+          {ROAST_LEVELS.map((level) => {
+            const b = ROAST_LEVEL_BASELINE[level];
+            return (
+              <div key={level} className="p-4">
+                <h3 className="font-semibold">{b.label}</h3>
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                  <div><dt className="text-xs text-foreground-muted">Ready</dt><dd>Day {b.minRestDays}</dd></div>
+                  <div><dt className="text-xs text-foreground-muted">Peak</dt><dd>Day {b.peakStartDays}–{b.peakEndDays}</dd></div>
+                  <div><dt className="text-xs text-foreground-muted">Until</dt><dd>Day {b.drinkableEndDays}</dd></div>
+                </dl>
+              </div>
+            );
+          })}
+        </div>
+        <div tabIndex={0} aria-label="Roast level timing table" className="hidden overflow-x-auto rounded-md border border-border bg-surface sm:block">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-wide text-foreground-muted">
@@ -70,25 +86,25 @@ export default function AboutPage() {
       </section>
 
       <section className="mt-8 flex flex-col gap-3">
-        <h2 className="font-display text-xl font-semibold">Processes</h2>
-        <div className="flex flex-col gap-3">
+        <h2 className="section-title">Processes</h2>
+        <div className="divide-y divide-border border-y border-border">
           {PROCESSES.map((process) => {
             const p = PROCESS_OFFSETS[process];
             return (
-              <Card key={process} className="flex flex-col gap-1.5">
+              <div key={process} className="flex flex-col gap-1.5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="font-semibold">{p.label}</h3>
                   <ConfidenceBadge confidence={p.confidence} />
                 </div>
                 <p className="text-sm text-foreground-muted">{p.description}</p>
-              </Card>
+              </div>
             );
           })}
         </div>
       </section>
 
       <section className="mt-8 flex flex-col gap-3">
-        <h2 className="font-display text-xl font-semibold">Uncertainty, on purpose</h2>
+        <h2 className="section-title">Uncertainty, on purpose</h2>
         <Card className="flex flex-col gap-3 text-sm text-foreground-muted">
           <p>
             Coffee development varies by roast profile, coffee density, packaging, storage, and brewing method. These dates are

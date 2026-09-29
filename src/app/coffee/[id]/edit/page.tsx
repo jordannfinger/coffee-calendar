@@ -41,8 +41,8 @@ function EditCoffeeContent({ id }: { id: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="mb-6 font-display text-3xl font-semibold">Edit {coffee.name}</h1>
+    <div className="page-shell max-w-3xl">
+      <div className="mb-7"><p className="eyebrow mb-2">Your collection</p><h1 className="page-title">Edit {coffee.name}</h1><p className="mt-2 text-sm text-foreground-muted">Update this bag and its brewing notes.</p></div>
       <CoffeeForm key={id} initialValues={rowToFormValues(coffee)} onSubmit={handleSubmit} submitLabel="Save changes" />
     </div>
   );

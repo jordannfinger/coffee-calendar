@@ -57,8 +57,11 @@ export function downloadTextFile(filename: string, content: string, mimeType: st
   link.download = filename;
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Keep the anchor and its blob URL alive while the browser starts the download.
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 60_000);
 }
 
 export function exportCoffeesAsCsv(coffees: CoffeeRow[]) {

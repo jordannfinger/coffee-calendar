@@ -1,83 +1,67 @@
 import Link from "next/link";
 import { CoffeeCalculator } from "@/components/coffee/CoffeeCalculator";
-import { Card } from "@/components/ui/Card";
+import { LandingFilm } from "@/components/landing/LandingFilm";
 import { buttonClasses } from "@/components/ui/Button";
-
-const HOW_IT_WORKS = [
-  { step: "1", title: "Enter your roast date", body: "The single most important input — everything else is calculated relative to it." },
-  { step: "2", title: "Choose the process", body: "Washed, natural, anaerobic, carbonic maceration, and more — each settles at a different pace." },
-  { step: "3", title: "See your drinking window", body: "Not ready, drinkable, peak, and out of peak — mapped onto an actual calendar." },
-];
 
 export default function HomePage() {
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-16 px-4 py-10 sm:px-6 sm:py-14">
-      <section className="flex flex-col gap-6 text-center sm:gap-8">
-        <div className="mx-auto flex max-w-2xl flex-col gap-4">
-          <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-            Know when your <em className="text-brand not-italic font-medium">coffee</em> is ready.
+    <div className="page-shell !pt-4 sm:!pt-7">
+      <section className="grid overflow-hidden rounded-lg bg-[#172b21] text-[#f7f7f3] lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center">
+        <div className="px-6 py-10 sm:px-10 sm:py-14 lg:px-12 lg:py-20">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#a6d4b5]">For filter coffee, in its time</p>
+          <h1 className="mt-5 max-w-[11ch] font-display text-[clamp(2.75rem,5.2vw,5.3rem)] font-medium leading-[1.04] tracking-[-.055em]">
+            Your best cup has its day.
           </h1>
-          <p className="text-balance text-lg text-foreground-muted">
-            Roast date in. Peak drinking window out. Coffee Calendar tells you when your filter coffee is ready to drink, when it
-            peaks, and when it’s had its best days — for every process and roast level.
+          <p className="mt-6 max-w-md text-base leading-7 text-[#d2dfd3]">
+            Find when each roast opens up, reaches its peak, and deserves a place in your morning.
           </p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <a href="#calculator" className={buttonClasses("secondary", "lg", "!border-[#f7f7f3] !bg-[#f7f7f3] !text-[#172b21] hover:!bg-[#e4eee7]")}>Find your window</a>
+            <Link href="/calendar" className="inline-flex min-h-12 items-center px-3 text-sm font-semibold text-[#f7f7f3] underline decoration-[#a6d4b5] underline-offset-4 transition-colors hover:text-[#a6d4b5]">Explore the calendar</Link>
+          </div>
+        </div>
+        <div className="min-w-0 border-t border-[#456456] lg:border-l lg:border-t-0">
+          <LandingFilm />
+          <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-semibold uppercase tracking-[.12em] text-[#c7d9ca] sm:px-5">
+            <span>The film</span><span>20 seconds · Sound available</span>
+          </div>
+          <details className="border-t border-[#456456] px-4 py-3 text-xs leading-5 text-[#c7d9ca] sm:px-5">
+            <summary className="w-fit text-xs font-semibold underline decoration-[#789982] underline-offset-4 hover:text-white">Film credits</summary>
+            <p className="mt-2 max-w-xl">
+              Footage from <a className="underline underline-offset-2" href="https://www.pexels.com/video/slow-pour-over-coffee-brewing-in-filter-37771208/">Pexels</a>,{" "}
+              <a className="underline underline-offset-2" href="https://www.pexels.com/video/pour-over-coffee-in-making-5564283/">Pexels</a>, and{" "}
+              <a className="underline underline-offset-2" href="https://www.pexels.com/video/pouring-coffee-on-a-cup-9356233/">Pexels</a>.
+              Music: <a className="underline underline-offset-2" href="https://ende.app/en/song/12874-happy-beats-business-moves-vol-9">Happy Beats &amp; Business Moves, Vol. 9 by Ende</a>,{" "}
+              <a className="underline underline-offset-2" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Excerpt trimmed and mixed with sound effects.
+            </p>
+          </details>
         </div>
       </section>
 
-      <section aria-labelledby="calculator-heading" className="flex flex-col gap-4">
-        <h2 id="calculator-heading" className="sr-only">
-          Coffee calculator
-        </h2>
+      <section id="calculator" aria-labelledby="calculator-heading" className="scroll-mt-24 pt-12 sm:pt-16">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="eyebrow mb-1">Start with your roast date</p>
+            <h2 id="calculator-heading" className="section-title">Drinking window calculator</h2>
+          </div>
+          <span className="text-sm text-foreground-muted">No account needed</span>
+        </div>
         <CoffeeCalculator />
       </section>
 
-      <section aria-labelledby="how-it-works-heading" className="flex flex-col gap-6">
-        <h2 id="how-it-works-heading" className="text-center font-display text-2xl font-semibold sm:text-3xl">
-          How it works
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {HOW_IT_WORKS.map((item) => (
-            <Card key={item.step} className="flex flex-col gap-2">
-              <span className="font-display text-2xl font-semibold text-brand">{item.step}</span>
-              <h3 className="font-semibold">{item.title}</h3>
-              <p className="text-sm text-foreground-muted">{item.body}</p>
-            </Card>
-          ))}
+      <section aria-label="Explore Coffee Calendar" className="mt-12 grid border-t border-border md:grid-cols-2">
+        <div className="border-b border-border py-7 md:border-b-0 md:border-r md:pr-10">
+          <p className="eyebrow mb-2">Your coffee, in context</p>
+          <h2 className="section-title">Keep track of every bag</h2>
+          <p className="mt-2 max-w-md text-sm leading-6 text-foreground-muted">Save a coffee once. See its best days on the calendar, decide what to drink today, and record the brews you want to remember.</p>
+          <Link href="/coffee/new" className={buttonClasses("secondary", "md", "mt-5")}>Add your first coffee</Link>
         </div>
-      </section>
-
-      <section aria-labelledby="planner-heading">
-        <Card className="flex flex-col items-start gap-4 bg-brand-tint/60 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-1">
-            <h2 id="planner-heading" className="font-display text-xl font-semibold sm:text-2xl">
-              Planning ahead? Work backward from a date.
-            </h2>
-            <p className="text-sm text-foreground-muted sm:max-w-xl">
-              Tell us when you want coffee, and we’ll tell you when to order it and what roast date to look for — across every
-              process.
-            </p>
-          </div>
-          <Link href="/search" className={buttonClasses("primary", "lg", "shrink-0")}>
-            Plan a date →
-          </Link>
-        </Card>
-      </section>
-
-      <section aria-labelledby="account-heading">
-        <Card className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-1">
-            <h2 id="account-heading" className="font-display text-xl font-semibold sm:text-2xl">
-              Track your own coffee — no account needed
-            </h2>
-            <p className="text-sm text-foreground-muted sm:max-w-xl">
-              Save coffees, see a personal calendar, and get a ranked answer to &ldquo;what should I drink today?&rdquo; right away.
-              Add an email later only if you want your data to survive clearing cookies or follow you to a new device.
-            </p>
-          </div>
-          <Link href="/coffee/new" className={buttonClasses("secondary", "lg", "shrink-0")}>
-            Start tracking →
-          </Link>
-        </Card>
+        <div className="py-7 md:pl-10">
+          <p className="eyebrow mb-2">Looking ahead</p>
+          <h2 className="section-title">Start with a date</h2>
+          <p className="mt-2 max-w-md text-sm leading-6 text-foreground-muted">Pick the day you want to brew. Find which saved coffees will be at their best, or when to look for a fresh roast.</p>
+          <Link href="/search" className={buttonClasses("secondary", "md", "mt-5")}>Find a roast date</Link>
+        </div>
       </section>
     </div>
   );

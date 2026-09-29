@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { calculateCoffeeWindow, getCoffeeStatus } from "@/lib/coffee/engine";
-import { formatDateOnly, parseDateOnly } from "@/lib/coffee/dateUtils";
+import { formatDateOnly, formatLong, parseDateOnly } from "@/lib/coffee/dateUtils";
 import { useToday } from "@/lib/coffee/useToday";
 import { PROCESS_OPTIONS, ROAST_LEVEL_OPTIONS, subtypesFor } from "@/lib/coffee/options";
 import type { Process, RoastLevel } from "@/lib/coffee/types";
@@ -32,8 +32,12 @@ export function CoffeeCalculator() {
   const status = getCoffeeStatus(window, now);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_1fr]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,350px)_1fr]">
       <Card className="flex flex-col gap-4">
+        <div className="border-b border-border pb-4">
+          <p className="text-sm font-semibold">Coffee details</p>
+          <p className="mt-1 text-sm text-foreground-muted">Use the information on the bag.</p>
+        </div>
         <Field label="Roast date" htmlFor="calc-roast-date">
           <input
             id="calc-roast-date"
@@ -87,18 +91,22 @@ export function CoffeeCalculator() {
         </Field>
       </Card>
 
-      <Card className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-display text-xl font-semibold">Your coffee</h3>
-          <div className="flex items-center gap-2">
-            <StatusBadge status={status} />
-            <ConfidenceBadge confidence={window.confidence} />
+      <Card className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-5">
+          <div>
+            <p className="eyebrow mb-2">Estimated peak</p>
+            <h3 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {formatLong(window.peakFrom)} <span className="font-normal text-foreground-muted">to</span> {formatLong(window.peakUntil)}
+            </h3>
+            <p className="mt-2 text-sm text-foreground-muted">Ready to drink from {formatLong(window.drinkableFrom)}</p>
           </div>
+          <StatusBadge status={status} />
         </div>
-
         <Timeline window={window} className="pt-6" />
-
-        <p className="text-sm text-foreground-muted">{window.notes}</p>
+        <div className="flex flex-wrap items-start justify-between gap-3 border-t border-border pt-4">
+          <p className="max-w-xl text-sm leading-6 text-foreground-muted">{window.notes}</p>
+          <ConfidenceBadge confidence={window.confidence} />
+        </div>
       </Card>
     </div>
   );

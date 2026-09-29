@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCoffee } from "@/lib/coffee/useCoffee";
 import { ResourceError } from "@/components/ui/ResourceError";
 import { calculateCoffeeWindow, getCoffeeStatus } from "@/lib/coffee/engine";
-import { parseDateOnly } from "@/lib/coffee/dateUtils";
+import { formatLong, parseDateOnly } from "@/lib/coffee/dateUtils";
 import { useToday } from "@/lib/coffee/useToday";
 import { useProfileOverrides } from "@/lib/coffee/useProfileOverrides";
 import { resolveOverride } from "@/lib/coffee/profileOverrides";
@@ -24,8 +24,8 @@ import { Button, buttonClasses } from "@/components/ui/Button";
 function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
   if (value === null || value === undefined || value === "") return null;
   return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-xs uppercase tracking-wide text-foreground-muted">{label}</dt>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <dt className="text-xs text-foreground-muted">{label}</dt>
       <dd className="text-sm font-medium text-foreground">{value}</dd>
     </div>
   );
@@ -58,7 +58,7 @@ function CoffeeDetailContent({ id }: { id: string }) {
     }
   }
 
-  if (loading) return <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6" aria-busy="true" />;
+  if (loading) return <div className="page-shell max-w-4xl" aria-busy="true"><div className="h-9 w-1/2 animate-pulse rounded bg-surface-muted" /><div className="mt-7 h-44 animate-pulse rounded-xl bg-surface-muted" /><span className="sr-only">Loading coffee</span></div>;
   if (error) return <div className="mx-auto max-w-3xl px-4 py-10"><ResourceError message={error} retry={refresh} /></div>;
   if (!coffee) {
     return (
@@ -83,11 +83,12 @@ function CoffeeDetailContent({ id }: { id: string }) {
   const status = getCoffeeStatus(coffeeWindow, now);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="page-shell max-w-4xl">
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
         <div>
-          <h1 className="font-display text-3xl font-semibold">{coffee.name}</h1>
-          <p className="text-foreground-muted">{coffee.roaster}</p>
+          <p className="eyebrow mb-2">My coffee / {coffee.roaster}</p>
+          <h1 className="page-title">{coffee.name}</h1>
+          <p className="mt-2 text-sm text-foreground-muted">{coffee.origin} · {PROCESS_OFFSETS[coffee.process].label} · Roasted {formatLong(parseDateOnly(coffee.roast_date))}</p>
         </div>
         <div className="flex gap-2">
           <Link href={`/coffee/${coffee.id}/edit`} className={buttonClasses("secondary", "sm")}>
@@ -100,9 +101,9 @@ function CoffeeDetailContent({ id }: { id: string }) {
       </div>
 
       {deleteError && <p role="alert" className="mb-4 text-sm text-status-not-ready-text">{deleteError}</p>}
-      <Card className="mb-6 flex flex-col gap-5">
+      <Card className="mb-5 flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold">Drinking window</h2>
+          <h2 className="section-title">Drinking window</h2>
           <div className="flex items-center gap-2">
             <StatusBadge status={status} />
             <ConfidenceBadge confidence={coffeeWindow.confidence} />
@@ -112,8 +113,8 @@ function CoffeeDetailContent({ id }: { id: string }) {
         <p className="text-sm text-foreground-muted">{coffeeWindow.notes}</p>
       </Card>
 
-      <Card className="mb-6">
-        <h2 className="mb-4 font-display text-lg font-semibold">Details</h2>
+      <Card className="mb-5">
+        <h2 className="mb-5 section-title">Details</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <DetailRow label="Origin" value={coffee.origin} />
           <DetailRow label="Process" value={`${PROCESS_OFFSETS[coffee.process].label}${coffee.process_subtype ? ` — ${coffee.process_subtype}` : ""}`} />
@@ -139,8 +140,8 @@ function CoffeeDetailContent({ id }: { id: string }) {
       </Card>
 
       {(coffee.brew_method || coffee.grind_setting || coffee.recipe || coffee.dose_g || coffee.water_g) && (
-        <Card className="mb-6">
-          <h2 className="mb-4 font-display text-lg font-semibold">Brewing</h2>
+        <Card className="mb-5">
+          <h2 className="mb-5 section-title">Brewing</h2>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <DetailRow label="Brew method" value={coffee.brew_method} />
             <DetailRow label="Grind setting" value={coffee.grind_setting} />

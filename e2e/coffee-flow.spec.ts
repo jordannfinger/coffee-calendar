@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { readFile } from "node:fs/promises";
 
 const mockUrl = "http://127.0.0.1:45217";
 
@@ -9,7 +8,7 @@ test.beforeEach(async ({ request }) => {
 
 test("calculator responds to coffee choices in the browser", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Know when your coffee is ready/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Your best cup has its day/i })).toBeVisible();
 
   await page.getByLabel("Roast date").fill("2026-09-01");
   const timeline = page.getByRole("img", { name: /Not ready/i });
@@ -92,6 +91,14 @@ test("a guest can restore a JSON export without duplicating it on retry", async 
 });
 
 test("a full backup restores brew history to its coffee and is safe to retry", async ({ page, request }) => {
+  await page.addInitScript(() => {
+    const create = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = (blob) => {
+      const url = create(blob);
+      (window as Window & { lastBackupBlobUrl?: string }).lastBackupBlobUrl = url;
+      return url;
+    };
+  });
   const { userId } = await (await request.get(`${mockUrl}/__state`)).json();
   const coffeeId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
   const brewId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -106,7 +113,15 @@ test("a full backup restores brew history to its coffee and is safe to retry", a
   await page.goto("/coffee");
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download backup" }).first().click();
-  const backup = Buffer.from(await readFile(await (await download).path()));
+  const downloaded = await download;
+  expect(downloaded.suggestedFilename()).toMatch(/\.json$/);
+  // Inspect the same Blob that backs the browser download. Chromium on this
+  // Windows runner can emit the download event without resolving download.path().
+  const backup = Buffer.from(await page.evaluate(async () => {
+    const url = (window as Window & { lastBackupBlobUrl?: string }).lastBackupBlobUrl;
+    if (!url) throw new Error("No backup Blob URL was created");
+    return await (await fetch(url)).text();
+  }));
   const contents = JSON.parse(backup.toString());
   expect(contents.version).toBe(2);
   expect(contents.coffees).toHaveLength(1);

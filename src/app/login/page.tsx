@@ -56,18 +56,20 @@ export default function LoginPage() {
 
   return (
     <AuthCard title="Log in" subtitle="Welcome back — pick up your saved coffees where you left off.">
-      <div className="mb-5 flex rounded-full border border-border bg-surface-muted p-1 text-sm font-medium">
+      <div className="mb-5 flex rounded-md border border-border bg-surface-muted p-1 text-sm font-medium">
         <button
           type="button"
           onClick={() => setMode("password")}
-          className={`flex-1 rounded-full py-1.5 transition-colors ${mode === "password" ? "bg-surface shadow-sm" : "text-foreground-muted"}`}
+          aria-pressed={mode === "password"}
+          className={`min-h-10 flex-1 rounded-sm py-2 transition-colors ${mode === "password" ? "bg-surface text-foreground" : "text-foreground-muted hover:text-foreground"}`}
         >
           Password
         </button>
         <button
           type="button"
           onClick={() => setMode("magic_link")}
-          className={`flex-1 rounded-full py-1.5 transition-colors ${mode === "magic_link" ? "bg-surface shadow-sm" : "text-foreground-muted"}`}
+          aria-pressed={mode === "magic_link"}
+          className={`min-h-10 flex-1 rounded-sm py-2 transition-colors ${mode === "magic_link" ? "bg-surface text-foreground" : "text-foreground-muted hover:text-foreground"}`}
         >
           Magic link
         </button>

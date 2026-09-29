@@ -34,8 +34,8 @@ function AddCoffeeContent() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="mb-6 font-display text-3xl font-semibold">Add a coffee</h1>
+    <div className="page-shell max-w-3xl">
+      <div className="mb-7"><p className="eyebrow mb-2">Your collection</p><h1 className="page-title">Add a coffee</h1><p className="mt-2 text-sm text-foreground-muted">Start with what is printed on the bag. Add brewing details whenever you like.</p></div>
       <CoffeeForm
         initialValues={{ ...EMPTY_COFFEE_FORM, roastDate: formatDateOnly(today()) }}
         onSubmit={handleSubmit}

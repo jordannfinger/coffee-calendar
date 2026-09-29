@@ -26,13 +26,13 @@ export function StatusBadge({
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-full border font-medium whitespace-nowrap",
+        "inline-flex items-center rounded-md border font-medium whitespace-nowrap",
         STATUS_CLASSES[status],
         sizeClasses,
         className,
       )}
     >
-      <span aria-hidden="true">{meta.emoji}</span>
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
       <span>{meta.label}</span>
     </span>
   );

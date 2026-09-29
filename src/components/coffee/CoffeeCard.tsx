@@ -48,12 +48,12 @@ export function CoffeeCard({ coffee, overrides }: { coffee: CoffeeRow; overrides
   const daysSinceRoast = differenceInCalendarDays(roastDate, now);
 
   return (
-    <Link href={`/coffee/${coffee.id}`} className="block">
-      <Card className="flex flex-col gap-3 transition-shadow hover:shadow-md">
+    <Link href={`/coffee/${coffee.id}`} className="group block h-full">
+      <Card className="flex h-full flex-col gap-4 transition-[border-color,background-color] duration-150 group-hover:border-brand/40 group-hover:bg-surface-muted/30">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-display text-lg font-semibold leading-tight">{coffee.name}</h3>
-            <p className="text-sm text-foreground-muted">{coffee.roaster}</p>
+            <h3 className="font-display text-xl font-semibold leading-tight">{coffee.name}</h3>
+            <p className="mt-1 text-sm text-foreground-muted">{coffee.roaster} · {coffee.origin}</p>
           </div>
           <StatusBadge status={status} size="sm" />
         </div>
@@ -62,8 +62,8 @@ export function CoffeeCard({ coffee, overrides }: { coffee: CoffeeRow; overrides
           {PROCESS_OFFSETS[coffee.process].label} · Roasted {daysSinceRoast} day{daysSinceRoast === 1 ? "" : "s"} ago
         </p>
 
-        <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
-          <span className="text-foreground-muted">
+        <div className="mt-auto flex flex-col gap-1 border-t border-border pt-3 text-sm">
+          <span className="text-xs text-foreground-muted">
             Peak {formatShort(window.peakFrom)} – {formatShort(window.peakUntil)}
           </span>
           <span className="font-medium text-foreground">{statusLine(window, now)}</span>
